@@ -1,0 +1,20 @@
+{
+  "name": "essote-mobile",
+  "description": "Mobile application for ESSOTE",
+  "main": "",
+  "authors": [
+    "Metatavu Oy"
+  ],
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/Metatavu/essote-mobile",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+
+  }
+}
