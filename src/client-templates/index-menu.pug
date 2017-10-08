@@ -1,12 +1,13 @@
-.index-page-content
-  .jumbotron
-    .container
-      .row
-        .col
-          img.mx-auto.img-fluid.index-image(src='gfx/logo_header.png')
-  .container-fluid
-    ul.list-group.index-link-container
-      each link in links
-        li.index-link.list-group-item(data-target=link.target)
-          i.link-icon(class=link.icon)
-          != link.name
+.swiper-slide
+  .index-page-content
+    .jumbotron
+      .container
+        .row
+          .col
+            img.mx-auto.img-fluid.index-image(src='gfx/logo_header.png')
+    .index-list-container
+      ul.list-group.index-link-container
+        each link in links
+          li.index-link.list-group-item.list-link(data-level=link.level, data-target=link.target)
+            i.link-icon(class=link.icon)
+            != link.name

@@ -1,3 +1,132 @@
 html, body, .page-content-container {
   height: 100%;
 }
+
+html, body {
+  position: relative;
+  height: 100%;
+}
+ 
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.swiper-container {
+  width: 100%;
+  height: 100%;
+}
+.swiper-slide {
+
+}
+
+.jumbotron {
+  background: #fff;
+  border-radius: 0;
+}
+
+.index-page-content {
+  background: url('/gfx/index-menu-bg.png');
+  height: 100%;
+  width: 100%;
+  background-size: cover;
+  background-position: top center;
+  
+  .index-list-container {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+  
+  .index-image {
+    max-width: 200px;
+    width: 100%;
+    display: block;
+  }
+  
+  .index-link-container {
+    color: #fff;
+    
+    .index-link {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #016db8;
+      border-top: 1px solid #016db8;
+      text-transform: uppercase;
+      font-size: 24px;
+      transition: background 0.2s;
+      
+      &.active {
+        background: #8ec63f;
+      }
+      
+      .link-icon {
+        vertical-align: middle;
+        font-size: 38px;
+        padding-right: 18px;
+      }
+      
+    }
+  }
+}
+
+.back-btn {
+  border-radius: 0;
+  font-size: 60px;
+  background: #0667ae;
+  padding-top: 0;
+  padding-bottom: 0;
+  width: 45px;
+}
+
+.subpage-header-container {
+
+  .submenu-header {
+    color: #fff;
+    background: url("/gfx/index-menu-bg.png");
+    width: 100%;
+    text-transform: uppercase;
+    background-size: cover;
+    background-position: center left;
+    padding-left: 35px;
+    font-size: 24px; 
+  }
+}
+
+.subpage-list-container {
+  margin-top: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+  
+  .sub-page-link {
+    text-transform: uppercase;
+    font-size: 20px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #016db8;
+    border-top: 1px solid #016db8;
+    
+    .link-icon {
+      color: #fff;
+      background: #97c11f;
+      border-radius: 50%;
+      font-size: 40px;
+      vertical-align: middle;
+      margin-right: 20px;   
+    }
+    
+    .fa-angle-right {
+      color: #97c11f;
+      font-size: 35px;
+    }
+  }
+}
+
+.news-content-container {
+  padding-left: 25px;
+  padding-right: 25px;
+  
+  .news-title {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+}

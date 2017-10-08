@@ -1,0 +1,17 @@
+mixin subPageHeader(title)
+    .subpage-header-container
+      .input-group
+        span.input-group-btn
+          button.btn.btn-primary.back-btn
+            i.fa.fa-angle-left
+        input.form-control-plaintext.submenu-header(type='text', readonly='readonly', value=title)
+
+.swiper-slide
+  +subPageHeader()
+  .news-image-container
+    img.mx-auto.img-fluid(src=newsImage)
+  .news-content-container
+    h3.news-title 
+      =title
+    .news-content
+      !=content
