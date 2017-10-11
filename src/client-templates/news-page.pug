@@ -9,8 +9,13 @@ mixin subPageHeader(title)
 .swiper-slide
   +subPageHeader(title)
   .content-page-wrapper
-    .news-image-container
-      img.mx-auto.img-fluid(src=newsImage)
+    if newsImage
+      .news-image-container
+        img.mx-auto.img-fluid(src=newsImage)
+    if date
+      .news-date-container
+        span.news.date
+        =date
     .news-content-container
       h3.news-title 
         =title
