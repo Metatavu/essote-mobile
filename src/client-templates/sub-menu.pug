@@ -11,7 +11,7 @@ mixin subPageHeader(title)
   .subpage-list-container
     ul.list-group.subpage-link-container
       each link in links
-        li.sub-page-link.list-group-item.list-link(data-target=link.target)
+        li.sub-page-link.list-group-item.list-link(data-level=link.level, data-target=link.target)
           i.link-icon(class=link.icon)
           != link.name
           i.fa.fa-angle-right.float-right

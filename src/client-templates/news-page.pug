@@ -7,11 +7,12 @@ mixin subPageHeader(title)
         input.form-control-plaintext.submenu-header(type='text', readonly='readonly', value=title)
 
 .swiper-slide
-  +subPageHeader()
-  .news-image-container
-    img.mx-auto.img-fluid(src=newsImage)
-  .news-content-container
-    h3.news-title 
-      =title
-    .news-content
-      !=content
+  +subPageHeader(title)
+  .content-page-wrapper
+    .news-image-container
+      img.mx-auto.img-fluid(src=newsImage)
+    .news-content-container
+      h3.news-title 
+        =title
+      .news-content
+        !=content

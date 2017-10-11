@@ -1,0 +1,32 @@
+mixin subPageHeader(title)
+    .subpage-header-container
+      .input-group
+        span.input-group-btn
+          button.btn.btn-primary.back-btn
+            i.fa.fa-angle-left
+        input.form-control-plaintext.submenu-header(type='text', readonly='readonly', value=title)
+
+.swiper-slide
+  +subPageHeader(title)
+  .content-page-wrapper
+    .emergency-room-content-container
+      p
+        strong.emergency-title 
+          =title
+      p 
+        |ma-pe 21:00 -07:00
+        br
+        |la-su ja pyhät 15:00 - 07:00
+      a(href='tel:015225588').badge.badge-pill.badge-danger.main-emergency-badge Soita 015 225 588
+      br
+      br
+      p
+        strong.emergency-queries Tiedustelut
+      a(href='tel:0153512300').badge.badge-pill.badge-primary.query-emergency-badge Soita 015 351 2300
+      p (ei hoidon tarpeen arviointia)
+      .traffic-meter.container
+        p
+          strong PÄIVYSTYKSEN RUUHKAMITTARI
+        img(src='gfx/ruuhkamittari.png').traffic-meter
+      
+
