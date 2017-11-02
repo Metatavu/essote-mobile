@@ -1,0 +1,29 @@
+mixin subPageHeader(title)
+    .subpage-header-container
+      .input-group
+        span.input-group-btn
+          button.btn.btn-primary.back-btn
+            i.fa.fa-angle-left
+        input.form-control-plaintext.submenu-header(type='text', readonly='readonly', value=title)
+
+.swiper-slide
+  +subPageHeader(title)
+  .subpage-list-container
+    ul.list-group.subpage-link-container
+      each child in children
+        case child.type
+          when 'LINK'
+            li.content-link.list-group-item.list-link(data-level=child.level, data-id=child.id)
+              a(href=child.content, target="_blank")
+                i.link-icon(class=child.icon)
+                !=child.name
+                i.fa.fa-angle-right.float-right
+          when 'PAGE'
+            li.content-page.list-group-item.list-link(data-level=child.level, data-id=child.id,data-content=child.content)
+              i.link-icon(class=child.icon)
+              !=child.name
+              i.fa.fa-angle-right.float-right
+          when 'NEWS'
+            |NEWS
+      .content-page-content
+        !=content

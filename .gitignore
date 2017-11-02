@@ -15,3 +15,4 @@ npm-debug.log
 /www/bower_components
 /bower_components
 .netbeans.xml
+/src/api-client/node_modules/

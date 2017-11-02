@@ -110,8 +110,15 @@ module.exports = function(grunt) {
       target: {
         src: 'www/index.html'
       }
+    },
+    browserify: {
+      apiclient: {
+        files: {
+          'www/js/soteapi-client.js': ['src/api-client/main.js']
+        }
+      }
     }
   });
   
-  grunt.registerTask('default', [ 'sass', 'pug', 'compile-client-templates', 'generate-config', 'babel', 'bower', 'wiredep' ]);
+  grunt.registerTask('default', [ 'sass', 'pug', 'compile-client-templates', 'generate-config', 'babel', 'bower', 'wiredep', 'browserify:apiclient' ]);
 };

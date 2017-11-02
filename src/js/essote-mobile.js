@@ -3,19 +3,163 @@
 
 (function(){
   'use strict';
+ 
+  class ContentItem {
+    
+    constructor(item) {
+      this.item = item;
+      this.id = item ? item.id : null;
+    }
+    
+    getChildren() {
+      return new Promise((resolve) => {
+        resolve([]);
+      });
+    }
+    
+    getContentsApi () {
+      return new SoteapiClient.ContentsApi();
+    }
+    
+    getCategoriesApi () {
+      return new SoteapiClient.CategoriesApi();
+    }
+    
+    getLocalizedValue (localizedValue, locale) {
+      for (let i = 0; i < localizedValue.length; i++) {
+        if (localizedValue[i].language === locale) {
+          return localizedValue[i].value;
+        }
+      }
+      
+      return null;
+    }
+    
+  };
+  
+  class RootContentItem extends ContentItem {
+    
+    getType() {
+      return 'root';
+    }
+    
+    getChildren() {
+      return this.getContentsApi().listContents({ parentId: 'ROOT', type: ['PAGE', 'LINK']})
+        .then((children) => {
+          return _.map(children, (child) => {
+            switch (child.type) {
+              case 'PAGE':
+                return new PageContentItem(child);
+              case 'LINK':
+                return new LinkContentItem(child);
+            }
+          });
+        });
+    }
+    
+    getContent(locale) {
+      this.getContentsApi().findContentData(this.id)
+        .then((data) => {
+          const content = this.getLocalizedValue(data, locale);
+            return {
+              page: page,
+              content: this.processPageContent(content)
+            };
+        });
+    }
+    
+  };
+  
+  class PageContentItem extends ContentItem {
+    
+    getType() {
+      return 'page';
+    }
+    
+    getChildren() {
+      return this.getContent()
+        .then((pageContent) => {
+          if ($('<pre>').html(pageContent.content).find('.sote-api-news-root').length) {
+            return this.listCategories()
+              .then((categories) => {
+                return _.map(categories, (category) => {
+                  return new CategoryContentItem(category);
+                });
+              });
+          } else {
+            return this.getContentsApi().listContents({ parentId: this.id, type: ['PAGE', 'LINK']})
+              .then((children) => {
+                return _.map(children, (child) => {
+                  switch (child.type) {
+                    case 'PAGE':
+                      return new PageContentItem(child);
+                    case 'LINK':
+                      return new LinkContentItem(child);
+                  }
+                });
+              });
+          }
+        });
+      
+    };
+    
+    getContent(locale) {
+      this.getContentsApi().findContentData(this.id)
+        .then((data) => {
+          const content = this.getLocalizedValue(data, locale);
+            return {
+              page: page,
+              content: this.processPageContent(content)
+            };
+        });
+    }
+    
+  };
+  
+  class LinkContentItem extends ContentItem {
+    
+    getType() {
+      return 'link';
+    }
+    
+    getContent(locale) {
+      this.getContentsApi().findContentData(this.id)
+        .then((data) => {
+          return this.getLocalizedValue(data, locale);
+        });
+    }
+    
+  };
+  
+  class CategoryContentItem extends ContentItem {
+    
+    getChildren() {
+      return this.getContentsApi().listContents({ category: this.item.slug, type: ['PAGE', 'LINK']})
+        .then((children) => {
+          return _.map(children, (child) => {
+            switch (child.type) {
+              case 'PAGE':
+                return new PageContentItem(child);
+              case 'LINK':
+                return new LinkContentItem(child);
+              case 'NEWS':
+                return new NewsContentItem(child);
+            }
+          });
+        });
+    }
+    
+  };
+  
+  class NewsContentItem extends ContentItem {
+   
+    
+  };
   
   $.widget("custom.essoteMobile", {
     
     options: {
-      maxLevel: 2,
-      indexMenuItems: [
-        {target: 'ota-yhteytta', icon: 'icon-ota-yhtaytta', name: 'Ota yhteyttä', level: 1},
-        {target: 'paivystys', icon: 'icon-paivystys', name: 'Päivystys', level: 1},
-        {target: 'palvelut', icon: 'icon-palvelut', name: 'Palvelut', level: 1},
-        {target: 'tiedotteet', icon: 'icon-tiedotteet', name: 'Tiedotteet', level: 1},
-        {target: 'toimipisteet', icon: 'icon-toimipisteet', name: 'Toimipisteet', level: 1}
-      ],
-      
+      maxLevel: 5,/**
       subpageData: {
         tiedotteet: [
           {target: 'tiedotteet-ota-yhteytta', icon: 'icon-ota-yhtaytta', name: 'Taudit liikkeellä', level: 2},
@@ -65,12 +209,16 @@
           date: '20.07.2015 klo 11:24',
           content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
         }
-      }
+      }**/
     },
 
     _create : function() {
+      SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
+      SoteapiClient.ApiClient.CollectionFormatEnum = 'multi';
+      
       this.createIndexPage();
       this._swiper = new Swiper('.swiper-container', { });
+      /**
       this.subpages = {};
       this.subpages['tiedotteet'] = new EssoteMobileSubPage({title: 'Tiedotteet', links: this.options.subpageData['tiedotteet'] }, pugSubMenu);
       this.subpages['paivystys'] = new EssoteMobileSubPage({title: 'PÄIVYSTYS'}, pugEmergencyRoomPage);
@@ -83,25 +231,134 @@
       this.subpages['tiedotteet-palvelut'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-palvelut'] , pugNewsPage);
       this.subpages['tiedotteet-tiedotteet'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-tiedotteet'] , pugNewsPage);
       this.subpages['tiedotteet-toimipisteet'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-toimipisteet'] , pugNewsPage);
-      
-      
+      **/
       $(this.element).on('touchend', '.back-btn', $.proxy(this._onBackBtnTouchEnd, this));
-      
       $(this.element).on('touchstart', '.list-link', $.proxy(this._onListItemTouchStart, this));
       $(this.element).on('touchend', '.list-link', $.proxy(this._onListItemTouchEnd, this));
     },
     
+    findContentData: function (contentId) {
+      return this.contentsApi().findContentData(contentId);
+    },
+    /**
+    listRootPages: function () {
+      return this.listContents({ parentId: 'ROOT', type: ['PAGE', 'LINK']});
+    },
+    **/
+    listChildPages: function (parentId) {
+      return this.listContents({ parentId: parentId, type: ['PAGE', 'LINK']});
+    },
+    
+    listChildPagesWithContents: function (parentId, locale) {
+      return this.listChildPages(parentId)
+        .then((childPages) => {
+          return Promise.all(_.map(childPages, (childPage) => {
+            return this.getPageContents(childPage, locale)
+          }));
+        });
+    },
+    
+    getPageContents: function (page, locale) {
+      return this.findContentData(page.id)
+        .then((data) => {
+          const content = this.getLocalizedValue(data, locale);
+          if ($('<pre>').find('.sote-api-news-root').length) {
+            return this.listCategories()
+              .then((categories) => {
+                return {
+                  page: Object.assign(page, {
+                    subtype: 'NEWS',
+                    categories: categories
+                  }),
+                  content: this.processPageContent(content)
+                };
+              });
+          } else {
+            return {
+              page: page,
+              content: this.processPageContent(content)
+            };
+          }
+        });
+    },
+    
+    getPageNews: function (page) {
+      return {
+        page: page,
+        content: this.processPageContent(content)
+      };
+    },
+    
+    listCategories: function () {
+      return this.categoriesApi().listCategories();
+    },
+    
+    listNewsItems: function (category) {
+      return this.listContents({ type: ['NEWS'], category: category });
+    },
+    
+    listContents: function (opts) {
+      return this.contentsApi().listContents(opts);
+    },
+    
+    contentsApi: function () {
+      return new SoteapiClient.ContentsApi();
+    },
+    
+    categoriesApi: function () {
+      return new SoteapiClient.CategoriesApi();
+    },
+    
+    getLocalizedValue: function (localizedValue, locale) {
+      for (let i = 0; i < localizedValue.length; i++) {
+        if (localizedValue[i].language === locale) {
+          return localizedValue[i].value;
+        }
+      }
+      
+      return null;
+    },
+    
+    processPageContent: function (content) {
+      if (!content) {
+        return null;
+      }
+      
+      const result = $('<pre>').html(content);
+      
+      result.find('a').each((index, link) => {
+        if ($(link).attr('href').startsWith('tel:')) {
+          $(link).addClass('badge badge-pill').wrap($('<div>'));
+          if ($(link).hasClass('emergency-phone')) {
+            $(link).addClass('badge-danger');
+          } else {
+            $(link).addClass('badge-primary phone');
+          }
+        }
+      });
+      
+      return result.html();
+    },
+    
     _onListItemTouchStart: function(e) {
+      const item = $(e.target).closest('.list-link');      
       $('.list-link').removeClass('active');
-      const listItemTarget = $(e.target).closest('.list-link').addClass('active').attr('data-target');
-      const listItemLevel = parseInt($(e.target).closest('.list-link').attr('data-level'), 10);
-      console.log(listItemLevel);
-      this.createSubPage(listItemTarget, listItemLevel);
+      item.addClass('active');
+      
+      const listItemId = item.attr('data-id');
+      const listItemLevel = parseInt(item.attr('data-level'), 10);
+      const title = item.text();
+      const content = item.attr('data-content');
+      
+      this.renderPage(listItemId, title, content, listItemLevel);
     },
     
     _onListItemTouchEnd: function(e) {
+      const item = $(e.target).closest('.list-link'); 
       $('.list-link').removeClass('active');
-      this._swiper.slideNext();
+      if (item.hasClass('content-page')) {
+        this._swiper.slideNext();
+      }
     },
     
     _onBackBtnTouchEnd: function(e) {
@@ -109,22 +366,52 @@
     },
     
     createIndexPage: function() {
-      const indexHtml = pugIndexMenu({
-        links: this.options.indexMenuItems
-      });
-      
-      $(this.element).find('.swiper-wrapper').append(indexHtml);
+      this.listChildPagesWithContents("ROOT", 'FI')
+        .then((pageDatas) => {
+          const indexHtml = pugIndexMenu({
+            links: _.map(pageDatas, (pageData) => {
+              console.log(pageData);
+              
+              const page = pageData.page;
+              const content = pageData.content;
+          
+              return Object.assign(page, {
+                icon: `icon-${page.category}`, 
+                name: this.getLocalizedValue(page.title, 'FI'),
+                content: content
+              });
+            })
+          });
+          
+          this.element.find('.swiper-wrapper').append(indexHtml);
+        });
     },
     
-    createSubPage: function(pageSlug, level) {
-      const subPageHtml = this.subpages[pageSlug].render();
-      const slidesToRemove = [ ];
-      for(let i = level; i <= this.options.maxLevel; i++) {
-        slidesToRemove.push(i);
-      }
-      console.log(slidesToRemove);
-      this._swiper.removeSlide(slidesToRemove);
-      this._swiper.appendSlide(subPageHtml);
+    renderPage: function(id, title, content, level) {      
+      this.listChildPagesWithContents(id, 'FI')
+        .then((childrenDatas) => {
+          const subPageHtml = pugContentPage({
+            title: title,
+            content: content,
+            children: _.map(childrenDatas, (childrenData) => {
+              const child = childrenData.page;
+              
+              return Object.assign(child, {
+                icon: `icon-${child.category}`,
+                name: this.getLocalizedValue(child.title, 'FI'),
+                content: childrenData.content
+              });
+            })
+          });
+          
+          const slidesToRemove = [ ];
+          for (let i = level + 1; i <= this.options.maxLevel; i++) {
+            slidesToRemove.push(i);
+          }
+          
+          this._swiper.removeSlide(slidesToRemove);
+          this._swiper.appendSlide(subPageHtml);
+        });
     }
     
   });

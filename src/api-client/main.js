@@ -1,0 +1,1 @@
+window.SoteapiClient = require('soteapi-client');

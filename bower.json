@@ -19,6 +19,7 @@
     "jquery-ui": "^1.12.1",
     "bootstrap": "v4.0.0-beta",
     "swiper": "^4.0.0",
-    "components-font-awesome": "^4.7.0"
+    "components-font-awesome": "^4.7.0",
+    "lodash": "^4.17.4"
   }
 }

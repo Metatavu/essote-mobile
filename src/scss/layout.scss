@@ -25,6 +25,29 @@ body {
   border-radius: 0;
 }
 
+.emergency-phone {
+  background-color: #f68121;
+  font-size: 24px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  padding-left: 45px;
+  padding-right: 45px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.phone {
+  background-color: #1989db;
+  font-size: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 35px;
+  padding-right: 35px; 
+  margin-bottom: 15px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .index-page-content {
   overflow-y: auto;
   overflow-x: hidden;
@@ -101,7 +124,7 @@ body {
   overflow-x: hidden;
   padding: 15px;
   
-  .sub-page-link {
+  .content-page, .content-link {
     text-transform: uppercase;
     font-size: 20px;
     border-radius: 0;
@@ -124,34 +147,21 @@ body {
     }
   }
 }
+
+.content-page-content {
+  text-align: center;
+}
+
 .content-page-wrapper {
   height: calc(100% - 77px);
   overflow-y: auto;
   overflow-x: hidden;
-
+/**
   .emergency-room-content-container {
     text-align: center;
     width: 100%;
     padding-top: 40px;
-    
-    .main-emergency-badge {
-      background-color: #f68121;
-      font-size: 24px;
-      padding-top: 7px;
-      padding-bottom: 7px;
-      padding-left: 45px;
-      padding-right: 45px; 
-    }
-    
-    .query-emergency-badge {
-      background-color: #1989db;
-      font-size: 20px;
-      padding-top: 5px;
-      padding-bottom: 5px;
-      padding-left: 35px;
-      padding-right: 35px; 
-      margin-bottom: 15px;
-    }
+   **/ 
     
     .traffic-meter.container {
       background-color: #a9d9fd;
@@ -167,7 +177,7 @@ body {
       }
     }
     
-  }
+  // }
   
   .news-date-container {
     color: #0379d1;
