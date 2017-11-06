@@ -15,7 +15,6 @@
         case 'LINK':
           return new LinkContentController(parent, item);
         case 'NEWS':
-          console.log("NewsContentController");
           return new NewsContentController(parent, item);
       }
     }
@@ -216,6 +215,12 @@
       return 'LINK';
     }
     
+    getHtml() {
+      return pugLinkView({
+        title: this.getTitle()
+      });
+    }
+    
     getContentHtml() {
       return $('<pre>').append($('<iframe>')).html(); 
     }
@@ -258,10 +263,6 @@
       });
     }
     
-    getHtml() {
-      return pugLinkView({});
-    }
-    
     getNavigationType() {
       return 'EXTERNAL';
     }
@@ -286,13 +287,162 @@
       
       return pugNewsContent({
         date: date,
-        newsImage: newImage,
+        newsImage: newsImage,
         title: this.getTitle(),
         content: this.getLocalizedValue(this.getItem().content, 'FI')
       });
     }
     
   };
+  
+  class Database {
+    
+    constructor(options) {
+      this.options = options;
+      this.database = null;
+    }
+    
+    initialize() {
+      return this.prepareDatabase()
+        .then(() => {
+          return this.openDatabase();
+        });
+    }
+    
+    useWebSQL() {
+      return device.platform === 'browser';
+    }
+    
+    openDatabase() {
+      return new Promise((resolve, reject) => {
+        if (this.useWebSQL()) {
+          this.database = window.openDatabase(this.options.database, '1.0', this.options.database, 2 * 1024 * 1024);
+          resolve(this.executeBatch(this.options.prepareStatements||[]));
+        } else {
+          const database = window.sqlitePlugin.openDatabase({ name: this.options.database, location: this.options.location }, (database) => {
+            this.database = database;
+            resolve(this.executeBatch(this.options.prepareStatements||[]));
+          });
+        }
+      });
+    }
+    
+    prepareDatabase () {
+      return new Promise((resolve, reject) => {
+        if (this.options.drop) {
+          if (this.useWebSQL()) {
+
+          } else {        
+            window.sqlitePlugin.deleteDatabase({ name: this.options.database, location: this.options.location }, () => {
+              resolve();
+            }, (err) => {
+              reject(err);
+            });
+          }
+        } else {
+          resolve();
+        }
+      });
+    }
+    
+    executeBatch(statements) {
+      if (this.useWebSQL()) {
+        return Promise.all(statements.map((statement) => {
+          return this.executeSql(statement);
+        }));
+      } else {
+        return new Promise((resolve, reject) => {
+          this.database.sqlBatch(statements, resolve, reject);
+        });
+      }
+    }
+    
+    executeSql(sql, params) {
+      return new Promise((resolve, reject) => {
+        if (this.useWebSQL()) {
+          this.database.transaction((transaction) => {
+            transaction.executeSql(sql, params, (p1, p2) => {
+              resolve(this.useWebSQL() ? p2 : p1);
+            }, (p1, p2) => {
+              reject(this.useWebSQL() ? p2 : p1);
+            });
+          });
+        } else {
+          return this.database.executeSql(sql, params, resolve, reject);
+        }
+      });
+    }
+    
+    list(sql, params) {
+      return new Promise((resolve, reject) => {
+        this.executeSql(sql, params)
+          .then((resultSet) => {
+            const result = [];
+    
+            for (let i = 0; i < resultSet.rows.length; i++) {
+              result.push(resultSet.rows.item(i));
+            }
+            
+            resolve(result);
+          })
+          .catch((err) => {
+            console.error(`Failed to execute sql ${sql}`, err);
+            resolve([]);
+          });
+      });
+    }
+    
+    find(sql, params) {
+      return this.list(sql, params)
+        .then((result) => {
+          return result && result.length ? result[0] : null;
+        });
+    }
+    
+  }
+  
+  class ItemDatabase extends Database {
+    
+    constructor() {
+      super({
+        drop: false,
+        database: 'essote-mobile.db',
+        location: 'default',
+        prepareStatements: [
+          'DROP TABLE IF EXISTS Item',
+          'CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext)'  
+        ]
+      });
+    }
+    
+    findItemById(id) {
+      return this.find('SELECT id, data FROM Item WHERE id = ?', [id]);
+    }
+    
+    listItemsByParentId(parentId) {
+      return this.list('SELECT id, data FROM Item WHERE parentId = ?', [parentId]);
+    }
+    
+    insertItem(id, parentId, data) {
+      return this.executeSql('INSERT INTO Item (id, parentId, data) VALUES (?, ?, ?)', [id, parentId, data]);
+    }
+    
+    updateItem(id, parentId, data) {
+      return this.executeSql('UPDATE Item SET data = ?, parentId = ? WHERE id = ?', [data, parentId, id]);
+    }
+    
+    upsertItem(id, parentId, data) {
+      return this.findItemById(id)
+        .then((row) => {
+          if (row) {
+            return this.updateItem(id, parentId, data);
+          } else {
+            return this.insertItem(id, parentId, data);
+          }
+        });
+    }
+    
+  } 
   
   $.widget("custom.essoteMobile", {
     
@@ -306,12 +456,12 @@
       
       this._rootController = new RootContentController();
       this._controllerStack = [this._rootController];
-      this._itemStore = {};
-      this._treeStore = {};
+      this._itemDatabase = this.options.itemDatabase;
       
       this.element.find('.swiper-wrapper').append(this._getActiveController().getHtml());
       
       this._swiper = new Swiper('.swiper-container', { });
+      this._swiper.on('slideChangeTransitionStart', this._onSlideChangeTransitionStart.bind(this));
       this._swiper.on('slidePrevTransitionEnd', this._onSlidePrevTransitionEnd.bind(this));
       this._swiper.on('slideNextTransitionEnd', this._onSlideNextTransitionEnd.bind(this));
  
@@ -338,30 +488,34 @@
       return this._controllerStack[this._controllerStack.length - 1];
     },
     
+    _onSlideChangeTransitionStart: function () {
+      this._sliding = true;
+    },
+    
     _onSlidePrevTransitionEnd: function () {
+      this._sliding = false;
       this._controllerStack.pop();
       this._refreshPage();
     },
     
     _onSlideNextTransitionEnd: function () {
+      this._sliding = false;
       this._refreshPage();
     },
     
     _onTaskQueueCallback: function (task, callback) {
       switch (task.type) {
         case 'item':
-          if (task.itemController.getItem()) {
-            this._persistItem(task.itemController);
-          }
-          
-          task.itemController.getChildren().then((children) => {
-            children.forEach((child) => {
-              this._taskQueue.push({type: 'item', 'itemController': child}, 0);
+          this._persistItem(task.itemController).then(() => {
+            task.itemController.getChildren().then((children) => {
+              children.forEach((child) => {
+                this._taskQueue.push({type: 'item', 'itemController': child}, 0);
+              });
+
+              setTimeout(() => {
+                callback();
+              }, this.options.queueTimeout);
             });
-            
-            setTimeout(() => {
-              callback();
-            }, this.options.queueTimeout);
           });
         break;
       }
@@ -371,78 +525,133 @@
       this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
     },
     
+    _findStoredItem: function (id) {
+      return new Promise((resolve) => {
+        return this._itemDatabase.findItemById(id)
+          .then((item) => {
+            resolve(item ? JSON.parse(item.data) : null);
+          })
+          .catch((err) => {
+            console.error(`Failed to retrieve persisted item ${id}`, err);
+            resolve(null);
+          });
+      });
+    },
+    
+    _upsertStoredItem: function (id, parentId, item) {
+      return new Promise((resolve) => {
+        return this._itemDatabase.upsertItem(id, parentId, JSON.stringify(item))
+          .then(() => {
+            resolve();
+          })
+          .catch((err) => {
+            console.error(`Failed to persist item ${id}`, err);
+            resolve();
+          });
+      });
+    },
+    
     _persistItem: function (itemController) {
       const id = itemController.getId();
       const parentId = itemController.getParentId();
       const newItem = itemController.getItem();
-      const oldItem = this._getStoredItem(id);
-      
-      if (!_.isEqual(oldItem, newItem)) {
-        this._itemStore[id] = newItem;
-        this.element.trigger('itemChange', {
-          itemController: itemController
+      if (!newItem) {
+        return new Promise((resolve) => {
+          resolve();
         });
       }
       
-      if (!this._treeStore[parentId]) {
-        this._treeStore[parentId] = [];
-      }
-      
-      if (this._treeStore[parentId].indexOf(id) === -1) {
-        this._treeStore[parentId].push(id);
-      }
+      return this._findStoredItem(id).then((result) => {
+        const oldItem = result;
+        if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+          return this._upsertStoredItem(id, parentId, newItem)
+            .then(() => {
+              this.element.trigger('itemChange', {
+                itemController: itemController
+              });
+              
+              return null;
+            });
+          } else {
+            return null;
+          }
+      });
     },
     
     _getItemController: function (parentController, id) {
-      const item = this._getStoredItem(id);
-      if (item) {
-        return ContentControllerFactory.createContentController(item.type, parentController, item);
-      } else {
-        console.error(`Could not find item by id ${id}`);
-        return null;
-      }
-    },
-    
-    _getStoredItem: function (id) {
-      return this._itemStore[id];
+      return this._findStoredItem(id)
+        .then((item) => {
+          if (item) {
+            return ContentControllerFactory.createContentController(item.type, parentController, item);
+          } else {
+            console.error(`Could not find item by id ${id}`);
+            return null;
+          }
+        });
     },
     
     _listByParent: function (parentController) {
-      const childIds = this._treeStore[parentController.getId()]||[];
-      return childIds.map((childId) => {
-        const child = this._getStoredItem(childId);
-        return ContentControllerFactory.createContentController(child.type, parentController, child);
+      return new Promise((resolve) => {
+        this._itemDatabase.listItemsByParentId(parentController.getId())
+          .then((results) => {
+            resolve(results.map((result) => {
+              const item = JSON.parse(result.data);
+              return ContentControllerFactory.createContentController(item.type, parentController, item);
+            }));
+          })
+          .catch(() => {
+            resolve([]);
+          });
       });
     },
     
     _refreshChildPages: function () {
-      const childPages = this._listByParent(this._getActiveController());
-      $('.swiper-slide-active .child-items-container').empty();
-      
-      childPages.forEach((childPage) => {
-        const itemHtml = this._getActiveController().getChildListItemHtml(childPage);
-        $('.swiper-slide-active .child-items-container').append(itemHtml);
+      return new Promise((resolve) => {
+        $('.swiper-slide-active .child-items-container').empty();
+        this._listByParent(this._getActiveController()).then((childPages) => {
+          childPages.forEach((childPage) => {
+            const itemHtml = this._getActiveController().getChildListItemHtml(childPage);
+            $('.swiper-slide-active .child-items-container').append(itemHtml);
+          });
+          
+          resolve();
+        });
       });
     },
     
     _refreshPage: function () {
-      this._refreshChildPages();
-      this._getActiveController().onBeforePageRefresh($('.swiper-slide-active .content-page-content'));
-      $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
-      this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));
+      this._refreshChildPages().then(() => {
+        this._getActiveController().onBeforePageRefresh($('.swiper-slide-active .content-page-content'));
+        $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
+        this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
+      });
     },
     
     _onItemChange: function (event, data) {
       const itemController = data.itemController;
       const id = itemController.getId();
       const parentId = itemController.getParentId();
-        
+      
       if (parentId === this._getActiveController().getId() || id === this._getActiveController().getId()) {
         this._refreshPage();
       }
     },
     
     _onListItemTouchStart: function(e) {
+      if (this._sliding) {
+        return;
+      }
+      
+      const item = $(e.target).closest('.list-link');      
+      $('.list-link').removeClass('active');
+      item.addClass('active');
+    },
+    
+    _onListItemTouchEnd: function(e) {
+      if (this._sliding) {
+        return;
+      }
+      
       const item = $(e.target).closest('.list-link');      
       $('.list-link').removeClass('active');
       item.addClass('active');
@@ -450,19 +659,20 @@
       const listItemId = item.attr('data-id');
       const listItemLevel = parseInt(item.attr('data-level'), 10);
       
-      this._controllerStack.push(this._getItemController(this._getActiveController(), listItemId));
-      
-      const slidesToRemove = [ ];
-      for (let i = listItemLevel + 1; i <= this.options.maxLevel; i++) {
-        slidesToRemove.push(i);
-      }
+      this._getItemController(this._getActiveController(), listItemId)
+        .then((itemController) => {
+          this._controllerStack.push(itemController);
 
-      this._swiper.removeSlide(slidesToRemove);
-      this._swiper.appendSlide(this._getActiveController().getHtml());
-    },
-    
-    _onListItemTouchEnd: function(e) {
-      this._swiper.slideNext();
+          const slidesToRemove = [];
+          for (let i = listItemLevel + 1; i <= this.options.maxLevel; i++) {
+            slidesToRemove.push(i);
+          }
+
+          this._swiper.removeSlide(slidesToRemove);
+          this._swiper.appendSlide(this._getActiveController().getHtml());
+          this._swiper.slideNext();
+        });
+      
       $('.list-link').removeClass('active');
     },
     
@@ -473,8 +683,16 @@
   });
   
   $(document).on("deviceready", () => {
-    console.log('Starting');
-    $(document.body).essoteMobile();
+    const itemDatabase = new ItemDatabase();
+    itemDatabase.initialize()
+      .then(() => {    
+        $(document.body).essoteMobile({
+          itemDatabase: itemDatabase
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   });
 
 })();
