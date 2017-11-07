@@ -303,10 +303,7 @@
     }
     
     initialize() {
-      return this.prepareDatabase()
-        .then(() => {
-          return this.openDatabase();
-        });
+      return this.openDatabase();
     }
     
     useWebSQL() {
@@ -323,24 +320,6 @@
             this.database = database;
             resolve(this.executeBatch(this.options.prepareStatements||[]));
           });
-        }
-      });
-    }
-    
-    prepareDatabase () {
-      return new Promise((resolve, reject) => {
-        if (this.options.drop) {
-          if (this.useWebSQL()) {
-
-          } else {        
-            window.sqlitePlugin.deleteDatabase({ name: this.options.database, location: this.options.location }, () => {
-              resolve();
-            }, (err) => {
-              reject(err);
-            });
-          }
-        } else {
-          resolve();
         }
       });
     }
@@ -403,15 +382,14 @@
   
   class ItemDatabase extends Database {
     
-    constructor() {
+    constructor(startClean) {
+      const prepareStatements = startClean ? ['DROP TABLE IF EXISTS Item'] : [];
+      prepareStatements.push('CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext)');
+      
       super({
-        drop: false,
         database: 'essote-mobile.db',
         location: 'default',
-        prepareStatements: [
-          'DROP TABLE IF EXISTS Item',
-          'CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext)'  
-        ]
+        prepareStatements: prepareStatements
       });
     }
     
