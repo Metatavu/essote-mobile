@@ -207,7 +207,7 @@
       return result.html();
     }
     
-  };
+  }
   
   class LinkContentController extends ContentController {
     
