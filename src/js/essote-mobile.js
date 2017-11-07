@@ -3,12 +3,62 @@
 
 (function(){
   'use strict';
- 
-  class ContentItem {
+  
+  class ContentControllerFactory {
     
-    constructor(item) {
+    static createContentController(type, parent, item) {
+      switch (type) {
+        case 'ROOT':
+          return new RootContentController(parent, item);
+        case 'PAGE':
+          return new PageContentController(parent, item);
+        case 'LINK':
+          return new LinkContentController(parent, item);
+        case 'NEWS':
+          return new NewsContentController(parent, item);
+      }
+    }
+    
+  }
+ 
+  class ContentController {
+    
+    constructor(parent, item) {
       this.item = item;
       this.id = item ? item.id : null;
+      this.parentId = parent ? parent.getId() : null;
+    }
+    
+    getId() {
+      return `${this.getType()}-${this.id}`;
+    }
+    
+    getHtml() {
+      return '';
+    }
+    
+    getNavigationType() {
+      return 'DEFAULT';
+    }
+    
+    getContentHtml() {
+      return '';
+    }
+    
+    getParentId() {
+      return this.parentId;
+    }
+    
+    getItem() {
+      return this.item;  
+    }
+    
+    getTitle() {
+      return this.getLocalizedValue(this.item.title, 'FI');
+    }
+    
+    getIcon() {
+      return `icon-${this.item.category}`;
     }
     
     getChildren() {
@@ -35,291 +85,108 @@
       return null;
     }
     
+    onScreenResize(activeSlide) {
+      
+    }
+    
+    onBeforePageRefresh (activeSlide) {
+      
+    }
+    
+    onAfterPageRefresh (activeSlide) {
+      
+    }
   };
   
-  class RootContentItem extends ContentItem {
+  class RootContentController extends ContentController {
+    
+    getId() {
+      return "ROOT";
+    }
     
     getType() {
-      return 'root';
+      return 'ROOT';
+    }
+    
+    getHtml() {
+      return pugRootView();
+    }
+    
+    getChildListItemHtml(itemController) {
+      const item = itemController.getItem();
+      
+      return pugItemRootListItem({
+        item: Object.assign({}, item, {
+          id: itemController.getId(),
+          icon: itemController.getIcon(),
+          name: itemController.getTitle()
+        })
+      });
     }
     
     getChildren() {
       return this.getContentsApi().listContents({ parentId: 'ROOT', type: ['PAGE', 'LINK']})
         .then((children) => {
           return _.map(children, (child) => {
-            switch (child.type) {
-              case 'PAGE':
-                return new PageContentItem(child);
-              case 'LINK':
-                return new LinkContentItem(child);
-            }
-          });
-        });
-    }
-    
-    getContent(locale) {
-      this.getContentsApi().findContentData(this.id)
-        .then((data) => {
-          const content = this.getLocalizedValue(data, locale);
-            return {
-              page: page,
-              content: this.processPageContent(content)
-            };
-        });
-    }
-    
-  };
-  
-  class PageContentItem extends ContentItem {
-    
-    getType() {
-      return 'page';
-    }
-    
-    getChildren() {
-      return this.getContent()
-        .then((pageContent) => {
-          if ($('<pre>').html(pageContent.content).find('.sote-api-news-root').length) {
-            return this.listCategories()
-              .then((categories) => {
-                return _.map(categories, (category) => {
-                  return new CategoryContentItem(category);
-                });
-              });
-          } else {
-            return this.getContentsApi().listContents({ parentId: this.id, type: ['PAGE', 'LINK']})
-              .then((children) => {
-                return _.map(children, (child) => {
-                  switch (child.type) {
-                    case 'PAGE':
-                      return new PageContentItem(child);
-                    case 'LINK':
-                      return new LinkContentItem(child);
-                  }
-                });
-              });
-          }
-        });
-      
-    };
-    
-    getContent(locale) {
-      this.getContentsApi().findContentData(this.id)
-        .then((data) => {
-          const content = this.getLocalizedValue(data, locale);
-            return {
-              page: page,
-              content: this.processPageContent(content)
-            };
-        });
-    }
-    
-  };
-  
-  class LinkContentItem extends ContentItem {
-    
-    getType() {
-      return 'link';
-    }
-    
-    getContent(locale) {
-      this.getContentsApi().findContentData(this.id)
-        .then((data) => {
-          return this.getLocalizedValue(data, locale);
-        });
-    }
-    
-  };
-  
-  class CategoryContentItem extends ContentItem {
-    
-    getChildren() {
-      return this.getContentsApi().listContents({ category: this.item.slug, type: ['PAGE', 'LINK']})
-        .then((children) => {
-          return _.map(children, (child) => {
-            switch (child.type) {
-              case 'PAGE':
-                return new PageContentItem(child);
-              case 'LINK':
-                return new LinkContentItem(child);
-              case 'NEWS':
-                return new NewsContentItem(child);
-            }
+            return ContentControllerFactory.createContentController(child.type, this, child);
           });
         });
     }
     
   };
   
-  class NewsContentItem extends ContentItem {
-   
+  class PageContentController extends ContentController {
     
-  };
-  
-  $.widget("custom.essoteMobile", {
+    getType() {
+      return 'PAGE';
+    }
     
-    options: {
-      maxLevel: 5,/**
-      subpageData: {
-        tiedotteet: [
-          {target: 'tiedotteet-ota-yhteytta', icon: 'icon-ota-yhtaytta', name: 'Taudit liikkeellä', level: 2},
-          {target: 'tiedotteet-paivystys', icon: 'icon-paivystys', name: 'Rokotuskampanja', level: 2},
-          {target: 'tiedotteet-palvelut', icon: 'icon-palvelut', name: 'Käsihygieniaviikko', level: 2},
-          {target: 'tiedotteet-tiedotteet', icon: 'icon-tiedotteet', name: 'Yleiset', level: 2},
-          {target: 'tiedotteet-toimipisteet', icon: 'icon-toimipisteet', name: 'Lorem Ipsum', level: 2}
-        ],
-        'toimipisteet': {
-          title: 'Toimipisteet',
-          'content': '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus aliquet placerat mauris non euismod. Nam vel urna sit amet justo porta tempor. Aenean tristique orci in nibh tempor accumsan. Etiam et nunc ut felis porta fringilla sit amet id purus. Duis ut elit ut nibh lacinia feugiat. Cras ut nunc non eros porta porttitor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce ullamcorper dictum diam, nec hendrerit quam venenatis vel. Donec non libero rhoncus magna tincidunt imperdiet. Curabitur nec dolor dignissim, tempor erat quis, ullamcorper lorem. Donec ac cursus turpis. In diam ante, aliquam ac dapibus lobortis, pretium at tortor. Suspendisse eleifend, nibh vitae sollicitudin euismod, ante magna aliquet nisi, malesuada pharetra justo lectus quis lacus. </p><p>Vivamus congue tortor ut magna tincidunt imperdiet. Curabitur in porta libero. Pellentesque massa massa, facilisis at ligula in, pellentesque euismod sem. Praesent placerat accumsan est. In eget vehicula ante, eu volutpat nunc. Cras eu nibh in nibh pretium vehicula. Fusce maximus vitae libero et auctor. Vivamus eget dui velit. Maecenas eget metus metus. Aliquam ac scelerisque ligula. Nulla facilisi. Duis malesuada tellus orci. Praesent pharetra enim et finibus ultricies. Vivamus gravida lectus eget eros pharetra congue. Sed suscipit eget tortor vel tempus. </p>'
-        },
-        'palvelut': {
-          title: 'Palvelut',
-          content: '<ul><li><a href="http://www.essote.fi/asiakkaalle/palvelut/hammaslaakaripaivystys-ja-hammashoitolat#mikk" >Suun terveydenhuolto</a></li><li><a href="http://www.essote.fi/asiakkaalle/palvelut/neuvolat/" >Neuvolat</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#lastenvalvojat" >Lastenvalvojat</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#oppilashuolto" >Mikkelin perusopetuksen oppilashuollon psykologi- ja kuraattoripalvelut</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#oppilashuolto2aste" >Mikkelin toisen asteen opiskeluhuollon psykologi- ja kuraattoripalvelut</a></li><li><a href="http://www.essote.fi/mikkelin-seudun-opiskelijaterveydenhuolto/">Opiskeluterveydenhuolto</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#kuntoutusosastot" >Kuntousosastot</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#fysio" >Fysioterapia</a></li><li><a href="http://www.essote.fi/asiakkaalle/palvelut/maahanmuuttopalvelut/" >Maahanmuuttopalvelut</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#mielent" >Mielenterveys- ja päihdepalvelut</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#aikuiss" >Aikuissosiaalityön ja taloudellisen tuen palvelut</a></li><li><a href="http://www.essote.fi/asiakkaalle/palvelut/talous-ja-velkaneuvonta/" >Talous- ja velkaneuvonta</a></li><li><a href="http://www.essote.fi/typ-reitti/" >TYP-reitti</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#olkkari" >Ohjaamo Olkkari</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#lastensuoj" >Lastensuojelun ja lapsiperheiden sosiaalipalvelut</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#pessi" >Sijais- ja jälkihuoltoyksikkö Pessi</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#havurinne" >Nuorten vastaanottoyksikkö Havurinne</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#turvakoti" >Turvakoti</a></li><li><a href="http://www.essote.fi/palvelut-paikkakunnittain/mikkelin-hyvinvointiasema#vanhusjavammais" >Vanhus- ja vammaispalvelut</a></li></ul>'
-        },
-        'ota-yhteytta' : {
-          title: 'Ota yhteyttä',
-          content: '<p><strong>Etelä-Savon sosiaali- ja terveyspalvelujen kuntayhtymä</strong></p><p>Porrassalmenkatu 35-37 50100 Mikkeli</p><p>Vaihde 015 3511 (ma-pe 8.00-16.00)</p><p><a href="mailto:kirjaamo@essote.fi">kirjaamo@essote.fi</a></p>'
-        },
-        'tiedotteet-ota-yhteytta': {
-          newsImage: 'gfx/news-image-1.jpeg',
-          title: 'Taudit liikkeellä',
-          date: '22.05.2015 klo 10:49',
-          content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
-        },
-        'tiedotteet-paivystys': {
-          newsImage: 'gfx/news-image-2.jpeg',
-          title: 'Rokotuskampanja',
-          date: '24.06.2015 klo 07:43',
-          content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
-        },
-        'tiedotteet-palvelut': {
-          newsImage: 'gfx/news-image-3.jpeg',
-          title: 'Käsihygieniaviikko',
-          date: '18.03.2015 klo 08:32',
-          content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
-        },
-        'tiedotteet-tiedotteet': {
-          newsImage: 'gfx/news-image-4.jpeg',
-          title: 'Yleiset',
-          date: '20.07.2015 klo 11:24',
-          content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
-        },
-        'tiedotteet-toimipisteet': {
-          title: 'Lorem Ipsum',
-          date: '20.07.2015 klo 11:24',
-          content: '<p>In mollis lectus vitae ipsum aliquam, vel dapibus magna volutpat. Donec luctus tempor odio lacinia luctus. Duis pulvinar orci tristique laoreet cursus. Proin gravida quam eget massa euismod, in consectetur libero ullamcorper. Sed tempor dolor nec gravida cursus. Quisque vehicula leo in erat gravida, id volutpat sapien aliquam. Nullam non bibendum mi, quis vestibulum felis. Mauris cursus velit ac gravida bibendum.</p><p>Nam condimentum non lorem sed posuere. Vivamus ultricies consequat leo luctus pulvinar. In eget odio varius, auctor mi vitae, tincidunt leo. Vestibulum tincidunt varius imperdiet. In in sem lorem. Praesent hendrerit vehicula sapien in pharetra. In nec sagittis dolor. Sed quis metus pharetra, dictum enim ut, porttitor ante. Praesent id dolor ex.</p>'
-        }
-      }**/
-    },
-
-    _create : function() {
-      SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
-      SoteapiClient.ApiClient.CollectionFormatEnum = 'multi';
+    getHtml() {
+      return pugPageView({
+        title: this.getTitle()
+      });
+    }
+    
+    getChildListItemHtml(itemController) {
+      const item = itemController.getItem();
       
-      this.createIndexPage();
-      this._swiper = new Swiper('.swiper-container', { });
-      /**
-      this.subpages = {};
-      this.subpages['tiedotteet'] = new EssoteMobileSubPage({title: 'Tiedotteet', links: this.options.subpageData['tiedotteet'] }, pugSubMenu);
-      this.subpages['paivystys'] = new EssoteMobileSubPage({title: 'PÄIVYSTYS'}, pugEmergencyRoomPage);
-      this.subpages['ota-yhteytta'] = new EssoteMobileSubPage(this.options.subpageData['ota-yhteytta'] , pugNewsPage);
-      this.subpages['palvelut'] = new EssoteMobileSubPage(this.options.subpageData['palvelut'] , pugNewsPage);
-      this.subpages['toimipisteet'] = new EssoteMobileSubPage(this.options.subpageData['toimipisteet'] , pugNewsPage);
-      
-      this.subpages['tiedotteet-ota-yhteytta'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-ota-yhteytta'] , pugNewsPage);
-      this.subpages['tiedotteet-paivystys'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-paivystys'] , pugNewsPage);
-      this.subpages['tiedotteet-palvelut'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-palvelut'] , pugNewsPage);
-      this.subpages['tiedotteet-tiedotteet'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-tiedotteet'] , pugNewsPage);
-      this.subpages['tiedotteet-toimipisteet'] = new EssoteMobileSubPage(this.options.subpageData['tiedotteet-toimipisteet'] , pugNewsPage);
-      **/
-      $(this.element).on('touchend', '.back-btn', $.proxy(this._onBackBtnTouchEnd, this));
-      $(this.element).on('touchstart', '.list-link', $.proxy(this._onListItemTouchStart, this));
-      $(this.element).on('touchend', '.list-link', $.proxy(this._onListItemTouchEnd, this));
-    },
+      return pugItemPageListItem({
+        item: Object.assign({}, item, {
+          id: itemController.getId(),
+          icon: itemController.getIcon(),
+          name: itemController.getTitle(),
+          level: this.isNewsRoot() ? item.level + 1 : item.level
+        })
+      });
+    }
     
-    findContentData: function (contentId) {
-      return this.contentsApi().findContentData(contentId);
-    },
-    /**
-    listRootPages: function () {
-      return this.listContents({ parentId: 'ROOT', type: ['PAGE', 'LINK']});
-    },
-    **/
-    listChildPages: function (parentId) {
-      return this.listContents({ parentId: parentId, type: ['PAGE', 'LINK']});
-    },
+    getContentHtml() {
+      return this.processPageContent(this.getLocalizedValue(this.getItem().content, 'FI'));
+    }
     
-    listChildPagesWithContents: function (parentId, locale) {
-      return this.listChildPages(parentId)
-        .then((childPages) => {
-          return Promise.all(_.map(childPages, (childPage) => {
-            return this.getPageContents(childPage, locale)
-          }));
+    isNewsRoot() {
+      return !!$('<pre>').html(this.getContentHtml()).find('.sote-api-news-root').length;
+    }
+    
+    getChildren() {
+      if (this.isNewsRoot()) {
+        return this.getContentsApi().listContents({ type: ['NEWS']})
+          .then((children) => {
+            return _.map(children, (child) => {
+              return ContentControllerFactory.createContentController(child.type, this, child);
+            });
         });
-    },
-    
-    getPageContents: function (page, locale) {
-      return this.findContentData(page.id)
-        .then((data) => {
-          const content = this.getLocalizedValue(data, locale);
-          if ($('<pre>').find('.sote-api-news-root').length) {
-            return this.listCategories()
-              .then((categories) => {
-                return {
-                  page: Object.assign(page, {
-                    subtype: 'NEWS',
-                    categories: categories
-                  }),
-                  content: this.processPageContent(content)
-                };
-              });
-          } else {
-            return {
-              page: page,
-              content: this.processPageContent(content)
-            };
-          }
+      } else {
+        return this.getContentsApi().listContents({ parentId: this.id, type: ['PAGE', 'LINK']})
+          .then((children) => {
+            return _.map(children, (child) => {
+              return ContentControllerFactory.createContentController(child.type, this, child);
+            });
         });
-    },
-    
-    getPageNews: function (page) {
-      return {
-        page: page,
-        content: this.processPageContent(content)
-      };
-    },
-    
-    listCategories: function () {
-      return this.categoriesApi().listCategories();
-    },
-    
-    listNewsItems: function (category) {
-      return this.listContents({ type: ['NEWS'], category: category });
-    },
-    
-    listContents: function (opts) {
-      return this.contentsApi().listContents(opts);
-    },
-    
-    contentsApi: function () {
-      return new SoteapiClient.ContentsApi();
-    },
-    
-    categoriesApi: function () {
-      return new SoteapiClient.CategoriesApi();
-    },
-    
-    getLocalizedValue: function (localizedValue, locale) {
-      for (let i = 0; i < localizedValue.length; i++) {
-        if (localizedValue[i].language === locale) {
-          return localizedValue[i].value;
-        }
       }
-      
-      return null;
-    },
+    }
     
-    processPageContent: function (content) {
+    processPageContent (content) {
       if (!content) {
         return null;
       }
@@ -338,87 +205,472 @@
       });
       
       return result.html();
+    }
+    
+  }
+  
+  class LinkContentController extends ContentController {
+    
+    getType() {
+      return 'LINK';
+    }
+    
+    getHtml() {
+      return pugLinkView({
+        title: this.getTitle()
+      });
+    }
+    
+    getContentHtml() {
+      return $('<pre>').append($('<iframe>')).html(); 
+    }
+    
+    processIframe(iframe) {
+      const scaleFrom = parseInt($(iframe).attr('data-content-width'));
+      
+      if (scaleFrom) {
+        const containerWidth = iframe.parent().width();
+        const scale = containerWidth / scaleFrom;
+
+        iframe.css({
+          'transform-origin': '0 0',
+          'transform': `scale(${scale})`,
+          'width': containerWidth / scale
+        });
+      }
+    }
+    
+    onScreenResize(activeSlide) {
+      this.processIframe(activeSlide.find('iframe'));
+    }
+    
+    onAfterPageRefresh (activeSlide) {
+      let width;
+      const iframe = activeSlide.find('iframe');
+      const src = this.getLocalizedValue(this.getItem().content, 'FI');
+      
+      if (src.startsWith('https://islab')) {
+        iframe.attr({
+          'data-content-width': 800
+        });
+      }
+              
+      iframe.on('load', () => {
+        this.processIframe(iframe);
+      })
+      .attr({
+        src: src
+      });
+    }
+    
+    getNavigationType() {
+      return 'EXTERNAL';
+    }
+    
+  };
+  
+  class NewsContentController extends ContentController {
+    
+    getType() {
+      return 'NEWS';
+    }
+    
+    getHtml() {
+      return pugNewsView({
+        title: this.getTitle()
+      });
+    }
+    
+    getContentHtml() {
+      const date = null;
+      const newsImage = null;
+      
+      return pugNewsContent({
+        date: date,
+        newsImage: newsImage,
+        title: this.getTitle(),
+        content: this.getLocalizedValue(this.getItem().content, 'FI')
+      });
+    }
+    
+  };
+  
+  class Database {
+    
+    constructor(options) {
+      this.options = options;
+      this.database = null;
+    }
+    
+    initialize() {
+      return this.openDatabase();
+    }
+    
+    useWebSQL() {
+      return device.platform === 'browser';
+    }
+    
+    openDatabase() {
+      return new Promise((resolve, reject) => {
+        if (this.useWebSQL()) {
+          this.database = window.openDatabase(this.options.database, '1.0', this.options.database, 2 * 1024 * 1024);
+          resolve(this.executeBatch(this.options.prepareStatements||[]));
+        } else {
+          const database = window.sqlitePlugin.openDatabase({ name: this.options.database, location: this.options.location }, (database) => {
+            this.database = database;
+            resolve(this.executeBatch(this.options.prepareStatements||[]));
+          });
+        }
+      });
+    }
+    
+    executeBatch(statements) {
+      if (this.useWebSQL()) {
+        return Promise.all(statements.map((statement) => {
+          return this.executeSql(statement);
+        }));
+      } else {
+        return new Promise((resolve, reject) => {
+          this.database.sqlBatch(statements, resolve, reject);
+        });
+      }
+    }
+    
+    executeSql(sql, params) {
+      return new Promise((resolve, reject) => {
+        if (this.useWebSQL()) {
+          this.database.transaction((transaction) => {
+            transaction.executeSql(sql, params, (p1, p2) => {
+              resolve(this.useWebSQL() ? p2 : p1);
+            }, (p1, p2) => {
+              reject(this.useWebSQL() ? p2 : p1);
+            });
+          });
+        } else {
+          return this.database.executeSql(sql, params, resolve, reject);
+        }
+      });
+    }
+    
+    list(sql, params) {
+      return new Promise((resolve, reject) => {
+        this.executeSql(sql, params)
+          .then((resultSet) => {
+            const result = [];
+    
+            for (let i = 0; i < resultSet.rows.length; i++) {
+              result.push(resultSet.rows.item(i));
+            }
+            
+            resolve(result);
+          })
+          .catch((err) => {
+            console.error(`Failed to execute sql ${sql}`, err);
+            resolve([]);
+          });
+      });
+    }
+    
+    find(sql, params) {
+      return this.list(sql, params)
+        .then((result) => {
+          return result && result.length ? result[0] : null;
+        });
+    }
+    
+  }
+  
+  class ItemDatabase extends Database {
+    
+    constructor(startClean) {
+      const prepareStatements = startClean ? ['DROP TABLE IF EXISTS Item'] : [];
+      prepareStatements.push('CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext)');
+      
+      super({
+        database: 'essote-mobile.db',
+        location: 'default',
+        prepareStatements: prepareStatements
+      });
+    }
+    
+    findItemById(id) {
+      return this.find('SELECT id, data FROM Item WHERE id = ?', [id]);
+    }
+    
+    listItemsByParentId(parentId) {
+      return this.list('SELECT id, data FROM Item WHERE parentId = ?', [parentId]);
+    }
+    
+    insertItem(id, parentId, data) {
+      return this.executeSql('INSERT INTO Item (id, parentId, data) VALUES (?, ?, ?)', [id, parentId, data]);
+    }
+    
+    updateItem(id, parentId, data) {
+      return this.executeSql('UPDATE Item SET data = ?, parentId = ? WHERE id = ?', [data, parentId, id]);
+    }
+    
+    upsertItem(id, parentId, data) {
+      return this.findItemById(id)
+        .then((row) => {
+          if (row) {
+            return this.updateItem(id, parentId, data);
+          } else {
+            return this.insertItem(id, parentId, data);
+          }
+        });
+    }
+    
+  } 
+  
+  $.widget("custom.essoteMobile", {
+    
+    options: {
+      maxLevel: 5,
+      queueTimeout: 200
+    },
+
+    _create : function() {
+      SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
+      
+      this._rootController = new RootContentController();
+      this._controllerStack = [this._rootController];
+      this._itemDatabase = this.options.itemDatabase;
+      
+      this.element.find('.swiper-wrapper').append(this._getActiveController().getHtml());
+      
+      this._swiper = new Swiper('.swiper-container', { });
+      this._swiper.on('slideChangeTransitionStart', this._onSlideChangeTransitionStart.bind(this));
+      this._swiper.on('slidePrevTransitionEnd', this._onSlidePrevTransitionEnd.bind(this));
+      this._swiper.on('slideNextTransitionEnd', this._onSlideNextTransitionEnd.bind(this));
+ 
+      this.element.on('touchend', '.back-btn', $.proxy(this._onBackBtnTouchEnd, this));
+      this.element.on('touchstart', '.list-link', $.proxy(this._onListItemTouchStart, this));
+      this.element.on('touchend', '.list-link', $.proxy(this._onListItemTouchEnd, this));
+      this.element.on('itemChange', $.proxy(this._onItemChange, this));
+      
+      this._swiper.slideNext();
+      this._refreshPage();
+      
+      this._taskQueue = async.priorityQueue(this._onTaskQueueCallback.bind(this), 1);
+      this._taskQueue.drain = this._onTaskQueueDrain.bind(this);
+      this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
+      
+      $(window).resize(this._onWindowResize.bind(this));
+    },
+    
+    _onWindowResize: function () {
+      this._getActiveController().onScreenResize($('.swiper-slide-active .content-page-content'));
+    },
+    
+    _getActiveController: function () {
+      return this._controllerStack[this._controllerStack.length - 1];
+    },
+    
+    _onSlideChangeTransitionStart: function () {
+      this._sliding = true;
+    },
+    
+    _onSlidePrevTransitionEnd: function () {
+      this._sliding = false;
+      this._controllerStack.pop();
+      this._refreshPage();
+    },
+    
+    _onSlideNextTransitionEnd: function () {
+      this._sliding = false;
+      this._refreshPage();
+    },
+    
+    _onTaskQueueCallback: function (task, callback) {
+      switch (task.type) {
+        case 'item':
+          this._persistItem(task.itemController).then(() => {
+            task.itemController.getChildren().then((children) => {
+              children.forEach((child) => {
+                this._taskQueue.push({type: 'item', 'itemController': child}, 0);
+              });
+
+              setTimeout(() => {
+                callback();
+              }, this.options.queueTimeout);
+            });
+          });
+        break;
+      }
+    },
+    
+    _onTaskQueueDrain: function () {
+      this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
+    },
+    
+    _findStoredItem: function (id) {
+      return new Promise((resolve) => {
+        return this._itemDatabase.findItemById(id)
+          .then((item) => {
+            resolve(item ? JSON.parse(item.data) : null);
+          })
+          .catch((err) => {
+            console.error(`Failed to retrieve persisted item ${id}`, err);
+            resolve(null);
+          });
+      });
+    },
+    
+    _upsertStoredItem: function (id, parentId, item) {
+      return new Promise((resolve) => {
+        return this._itemDatabase.upsertItem(id, parentId, JSON.stringify(item))
+          .then(() => {
+            resolve();
+          })
+          .catch((err) => {
+            console.error(`Failed to persist item ${id}`, err);
+            resolve();
+          });
+      });
+    },
+    
+    _persistItem: function (itemController) {
+      const id = itemController.getId();
+      const parentId = itemController.getParentId();
+      const newItem = itemController.getItem();
+      if (!newItem) {
+        return new Promise((resolve) => {
+          resolve();
+        });
+      }
+      
+      return this._findStoredItem(id).then((result) => {
+        const oldItem = result;
+        if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+          return this._upsertStoredItem(id, parentId, newItem)
+            .then(() => {
+              this.element.trigger('itemChange', {
+                itemController: itemController
+              });
+              
+              return null;
+            });
+          } else {
+            return null;
+          }
+      });
+    },
+    
+    _getItemController: function (parentController, id) {
+      return this._findStoredItem(id)
+        .then((item) => {
+          if (item) {
+            return ContentControllerFactory.createContentController(item.type, parentController, item);
+          } else {
+            console.error(`Could not find item by id ${id}`);
+            return null;
+          }
+        });
+    },
+    
+    _listByParent: function (parentController) {
+      return new Promise((resolve) => {
+        this._itemDatabase.listItemsByParentId(parentController.getId())
+          .then((results) => {
+            resolve(results.map((result) => {
+              const item = JSON.parse(result.data);
+              return ContentControllerFactory.createContentController(item.type, parentController, item);
+            }));
+          })
+          .catch(() => {
+            resolve([]);
+          });
+      });
+    },
+    
+    _refreshChildPages: function () {
+      return new Promise((resolve) => {
+        $('.swiper-slide-active .child-items-container').empty();
+        this._listByParent(this._getActiveController()).then((childPages) => {
+          childPages.forEach((childPage) => {
+            const itemHtml = this._getActiveController().getChildListItemHtml(childPage);
+            $('.swiper-slide-active .child-items-container').append(itemHtml);
+          });
+          
+          resolve();
+        });
+      });
+    },
+    
+    _refreshPage: function () {
+      this._refreshChildPages().then(() => {
+        this._getActiveController().onBeforePageRefresh($('.swiper-slide-active .content-page-content'));
+        $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
+        this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
+      });
+    },
+    
+    _onItemChange: function (event, data) {
+      const itemController = data.itemController;
+      const id = itemController.getId();
+      const parentId = itemController.getParentId();
+      
+      if (parentId === this._getActiveController().getId() || id === this._getActiveController().getId()) {
+        this._refreshPage();
+      }
     },
     
     _onListItemTouchStart: function(e) {
+      if (this._sliding) {
+        return;
+      }
+      
+      const item = $(e.target).closest('.list-link');      
+      $('.list-link').removeClass('active');
+      item.addClass('active');
+    },
+    
+    _onListItemTouchEnd: function(e) {
+      if (this._sliding) {
+        return;
+      }
+      
       const item = $(e.target).closest('.list-link');      
       $('.list-link').removeClass('active');
       item.addClass('active');
       
       const listItemId = item.attr('data-id');
       const listItemLevel = parseInt(item.attr('data-level'), 10);
-      const title = item.text();
-      const content = item.attr('data-content');
       
-      this.renderPage(listItemId, title, content, listItemLevel);
-    },
-    
-    _onListItemTouchEnd: function(e) {
-      const item = $(e.target).closest('.list-link'); 
+      this._getItemController(this._getActiveController(), listItemId)
+        .then((itemController) => {
+          this._controllerStack.push(itemController);
+
+          const slidesToRemove = [];
+          for (let i = listItemLevel + 1; i <= this.options.maxLevel; i++) {
+            slidesToRemove.push(i);
+          }
+
+          this._swiper.removeSlide(slidesToRemove);
+          this._swiper.appendSlide(this._getActiveController().getHtml());
+          this._swiper.slideNext();
+        });
+      
       $('.list-link').removeClass('active');
-      if (item.hasClass('content-page')) {
-        this._swiper.slideNext();
-      }
     },
     
     _onBackBtnTouchEnd: function(e) {
       this._swiper.slidePrev();
-    },
-    
-    createIndexPage: function() {
-      this.listChildPagesWithContents("ROOT", 'FI')
-        .then((pageDatas) => {
-          const indexHtml = pugIndexMenu({
-            links: _.map(pageDatas, (pageData) => {
-              console.log(pageData);
-              
-              const page = pageData.page;
-              const content = pageData.content;
-          
-              return Object.assign(page, {
-                icon: `icon-${page.category}`, 
-                name: this.getLocalizedValue(page.title, 'FI'),
-                content: content
-              });
-            })
-          });
-          
-          this.element.find('.swiper-wrapper').append(indexHtml);
-        });
-    },
-    
-    renderPage: function(id, title, content, level) {      
-      this.listChildPagesWithContents(id, 'FI')
-        .then((childrenDatas) => {
-          const subPageHtml = pugContentPage({
-            title: title,
-            content: content,
-            children: _.map(childrenDatas, (childrenData) => {
-              const child = childrenData.page;
-              
-              return Object.assign(child, {
-                icon: `icon-${child.category}`,
-                name: this.getLocalizedValue(child.title, 'FI'),
-                content: childrenData.content
-              });
-            })
-          });
-          
-          const slidesToRemove = [ ];
-          for (let i = level + 1; i <= this.options.maxLevel; i++) {
-            slidesToRemove.push(i);
-          }
-          
-          this._swiper.removeSlide(slidesToRemove);
-          this._swiper.appendSlide(subPageHtml);
-        });
     }
     
   });
   
   $(document).on("deviceready", () => {
-    console.log('Starting');
-    $(document.body).essoteMobile();
+    const itemDatabase = new ItemDatabase();
+    itemDatabase.initialize()
+      .then(() => {    
+        $(document.body).essoteMobile({
+          itemDatabase: itemDatabase
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   });
 
 })();

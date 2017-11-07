@@ -1,0 +1,12 @@
+mixin subPageHeader(title)
+    .subpage-header-container
+      .input-group
+        span.input-group-btn
+          button.btn.btn-primary.back-btn
+            i.fa.fa-angle-left
+        input.form-control-plaintext.submenu-header(type='text', readonly='readonly', value=title)
+
+.swiper-slide.link-view
+  +subPageHeader(title)
+  .subpage-list-container
+    .content-page-content

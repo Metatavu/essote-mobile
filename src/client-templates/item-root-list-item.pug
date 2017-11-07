@@ -1,0 +1,9 @@
+case item.type
+  when 'LINK'
+    li.content-link.index-link.list-group-item.list-link(data-level=item.level, data-id=item.id)
+      i.link-icon(class=item.icon)
+      != item.name
+  when 'PAGE'
+    li.content-page.index-link.list-group-item.list-link(data-level=item.level, data-id=item.id)
+      i.link-icon(class=item.icon)
+      != item.name
