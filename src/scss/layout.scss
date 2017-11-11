@@ -117,6 +117,9 @@ body {
     background-position: center left;
     padding-left: 35px;
     font-size: 24px; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 10px;
   }
 }
 
@@ -147,10 +150,17 @@ body {
       font-size: 35px;
     }
   }
+    
+  .external-link a {
+    color: $content-external-link-color;
+    width: 100%;
+  }
+    
 }
 
 .page-view .content-page-content,
 .news-view .content-page-content {
+  
   padding: 15px;
   text-align: center;
 
@@ -171,6 +181,19 @@ body {
     left: 0;
     border: 0;
   }
+  
+  &.loading {
+    background-image: url("../gfx/loader-big.svg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100%;
+    width: 100%;
+
+    iframe {
+      display: none;
+    }
+  }
+  
 }
 
 .content-page-wrapper {
