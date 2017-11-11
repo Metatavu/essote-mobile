@@ -117,6 +117,9 @@ body {
     background-position: center left;
     padding-left: 35px;
     font-size: 24px; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 10px;
   }
 }
 
