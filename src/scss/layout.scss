@@ -110,7 +110,7 @@ body {
   
   .submenu-header {
     color: #fff;
-    background: url('../gfx/index-menu-bg.png');
+    background: url("../gfx/index-menu-bg.png");
     width: 100%;
     text-transform: uppercase;
     background-size: cover;
@@ -183,7 +183,7 @@ body {
   }
   
   &.loading {
-    background-image: url('../gfx/loader-big.svg');
+    background-image: url("../gfx/loader-big.svg");
     background-repeat: no-repeat;
     background-position: center center;
     height: 100%;
