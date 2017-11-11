@@ -458,6 +458,7 @@
     
     options: {
       maxLevel: 5,
+      touchSlideSlack: 10,
       queue: {
         initialTimeout: 100,
         timeout: 2000
@@ -642,6 +643,14 @@
       });
     },
     
+    _getTouchPosition: function (event) {
+      const touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
+      return {
+        x: touch.pageX,
+        y: touch.pageY
+      };
+    },
+    
     _onItemChange: function (event, data) {
       const itemController = data.itemController;
       const id = itemController.getId();
@@ -652,23 +661,31 @@
       }
     },
     
-    _onListItemTouchStart: function(e) {
+    _onListItemTouchStart: function(event) {
       if (this._sliding) {
         return;
       }
       
-      const item = $(e.target).closest('.list-link');      
+      this._listItemTouchPos = this._getTouchPosition(event);
+      
+      const item = $(event.target).closest('.list-link');      
       $('.list-link').removeClass('active');
       item.addClass('active');
     },
     
-    _onListItemTouchEnd: function(e) {
+    _onListItemTouchEnd: function(event) {
       if (this._sliding) {
         return;
       }
       
-      const item = $(e.target).closest('.list-link');      
+      const touchPos = this._getTouchPosition(event);
       $('.list-link').removeClass('active');
+      
+      if (Math.abs(this._listItemTouchPos.y - touchPos.y) > this.options.touchSlideSlack) {
+        return;  
+      }
+      
+      const item = $(event.target).closest('.list-link');      
       item.addClass('active');
       
       const listItemId = item.attr('data-id');
