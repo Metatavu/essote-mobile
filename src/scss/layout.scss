@@ -162,7 +162,6 @@ body {
 .news-view .content-page-content {
   
   padding: 15px;
-  text-align: center;
 
   figcaption {
     font-size: 12px;
@@ -172,12 +171,17 @@ body {
   
 }
 
+.page-view .content-page-content {
+  text-align: center;
+}
+
 .content-page-content {
   
   iframe {
     width: 100%;
-    height: 100%;
     position: absolute;
+    top: 77px;
+    height: calc(100vh - 77px);
     left: 0;
     border: 0;
   }
