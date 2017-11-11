@@ -284,7 +284,19 @@
     
     getNavigationType() {
       const src = this.getLocalizedValue(this.getItem().content, 'FI');
-      return src.startsWith('https') ? 'IFRAME' : 'EXTERNAL';
+      if (src.startsWith('https://www.google.fi/maps/')) {
+        // Google Maps links are opened with Gmaps app
+        return 'EXTERNAL';
+      }
+      
+      if (src.startsWith('https')) {
+        // Https links can be opened as iframes
+        return 'IFRAME';
+      }
+      
+      // Others are displayed as links
+      
+      return 'EXTERNAL';
     }
     
   };
@@ -446,11 +458,15 @@
     
     options: {
       maxLevel: 5,
-      queueTimeout: 200
+      queue: {
+        initialTimeout: 100,
+        timeout: 2000
+      }
     },
 
     _create : function() {
       SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
+      this.queueTimeout = this.options.queue.initialTimeout;
       
       this._rootController = new RootContentController();
       this._controllerStack = [this._rootController];
@@ -512,7 +528,7 @@
 
               setTimeout(() => {
                 callback();
-              }, this.options.queueTimeout);
+              }, this.queueTimeout);
             });
           });
         break;
@@ -520,6 +536,7 @@
     },
     
     _onTaskQueueDrain: function () {
+      this.queueTimeout = this.options.queue.timeout;
       this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
     },
     
