@@ -149,15 +149,29 @@
     
     getChildListItemHtml(itemController) {
       const item = itemController.getItem();
+      const navigationType = itemController.getNavigationType();
       
-      return pugItemPageListItem({
-        item: Object.assign({}, item, {
-          id: itemController.getId(),
-          icon: itemController.getIcon(),
-          name: itemController.getTitle(),
-          level: this.isNewsRoot() ? item.level + 1 : item.level
-        })
-      });
+      switch (navigationType) {
+        case 'EXTERNAL':
+          return pugItemPageListItemExternal({
+            item: Object.assign({}, item, {
+              id: itemController.getId(),
+              icon: itemController.getIcon(),
+              name: itemController.getTitle(),
+              level: this.isNewsRoot() ? item.level + 1 : item.level,
+              link: this.getLocalizedValue(item.content, 'FI')
+            })
+          });
+        default:
+          return pugItemPageListItem({
+            item: Object.assign({}, item, {
+              id: itemController.getId(),
+              icon: itemController.getIcon(),
+              name: itemController.getTitle(),
+              level: this.isNewsRoot() ? item.level + 1 : item.level
+            })
+          });
+      }
     }
     
     getContentHtml() {
@@ -244,6 +258,10 @@
       this.processIframe(activeSlide.find('iframe'));
     }
     
+    onBeforePageRefresh (activeSlide) {
+      activeSlide.addClass('loading');
+    }
+    
     onAfterPageRefresh (activeSlide) {
       let width;
       const iframe = activeSlide.find('iframe');
@@ -256,6 +274,7 @@
       }
               
       iframe.on('load', () => {
+        activeSlide.removeClass('loading');
         this.processIframe(iframe);
       })
       .attr({
@@ -264,7 +283,8 @@
     }
     
     getNavigationType() {
-      return 'EXTERNAL';
+      const src = this.getLocalizedValue(this.getItem().content, 'FI');
+      return src.startsWith('https') ? 'IFRAME' : 'EXTERNAL';
     }
     
   };
