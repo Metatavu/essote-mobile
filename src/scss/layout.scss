@@ -198,6 +198,27 @@ body {
     }
   }
   
+  .sote-api-event-list {
+    margin-bottom: 15px;
+    
+    &.loading {
+      background-image: url("../gfx/loader-horz.svg");
+      background-repeat: no-repeat;
+      background-position: center center;
+      min-height: 80px;
+      
+      .event-list {
+        display: none;
+      }
+  
+    }
+    
+    .event-list-title {
+      text-align: left;
+    }
+
+  }
+
 }
 
 .content-page-wrapper {

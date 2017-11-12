@@ -1,0 +1,10 @@
+.row.event-list
+  .col
+    each event in events 
+      .row
+        .col-2.event-list-date
+          =moment(event.startDate).format('dd D.M.')
+        .col.event-list-title
+          =event.title
+      
+  

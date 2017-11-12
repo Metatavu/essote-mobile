@@ -75,6 +75,25 @@
       return new SoteapiClient.CategoriesApi();
     }
     
+    getEventsApi () {
+      return new SoteapiClient.EventsApi();
+    }
+    
+    parseTimeFilter(value) {
+      if (!value) {
+        return;
+      }
+      
+      switch (value) {
+        case 'WEEK_START':
+          return moment().startOf('isoWeek').format();
+        case 'WEEK_END':
+          return moment().endOf('isoWeek').format();
+      }
+      
+      return moment(value).format();
+    }
+    
     getLocalizedValue (localizedValue, locale) {
       for (let i = 0; i < localizedValue.length; i++) {
         if (localizedValue[i].language === locale) {
@@ -219,6 +238,35 @@
       });
       
       return result.html();
+    }
+    
+    loadEventList(list) {
+      const options = {
+        category: $(list).attr('data-category'),
+        endsAfter: this.parseTimeFilter($(list).attr('data-ends-after')),
+        startsBefore: this.parseTimeFilter($(list).attr('data-starts-before'))
+      };
+      
+      this.getEventsApi().listEvents(options).then((events) => {
+        $(list).html(pugEventListMinimal({
+          events: events.map((event) => {
+            return Object.assign({}, event, {
+              title: this.getLocalizedValue(event.title, 'FI')
+            });
+          }),
+          moment: moment
+        }))
+        .removeClass('loading');
+      })
+      .catch((err) => {
+        console.error(`Failed to load event list: ${err}`);
+      });
+    }
+    
+    onAfterPageRefresh (activeSlide) {
+      $(activeSlide).find('.sote-api-event-list').each((index, list) => {
+        this.loadEventList($(list).addClass('loading').empty());
+      });
     }
     
   }
@@ -715,6 +763,8 @@
   });
   
   $(document).on("deviceready", () => {
+    moment.locale('fi');
+  
     const itemDatabase = new ItemDatabase();
     itemDatabase.initialize()
       .then(() => {    
