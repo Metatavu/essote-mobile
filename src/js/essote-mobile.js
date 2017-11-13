@@ -294,12 +294,14 @@
       
       if (scaleFrom) {
         const containerWidth = iframe.parent().width();
+        const containerHeight = $(window).height() - 77;
         const scale = containerWidth / scaleFrom;
-
+        
         iframe.css({
           'transform-origin': '0 0',
           'transform': `scale(${scale})`,
-          'width': containerWidth / scale
+          'width': containerWidth / scale,
+          'height': containerHeight / scale 
         });
       }
     }

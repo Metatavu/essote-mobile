@@ -22,11 +22,12 @@
     "components-font-awesome": "^4.7.0",
     "lodash": "^4.17.4",
     "async": "^2.5.0",
-    "moment": "^2.19.2"
+    "moment": "^2.19.2",
+    "es6-shim": "^0.35.3"
   },
   "overrides": {
     "moment": {
-      "main": "min/moment-with-locales.min.js"   
+      "main": "min/moment-with-locales.min.js"
     }
   }
 }
