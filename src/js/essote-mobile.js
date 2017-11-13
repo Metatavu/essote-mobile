@@ -237,6 +237,8 @@
         }
       });
       
+      result.find('.sote-api-news-root').empty();
+      
       return result.html();
     }
     

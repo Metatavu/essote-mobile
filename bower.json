@@ -23,5 +23,10 @@
     "lodash": "^4.17.4",
     "async": "^2.5.0",
     "moment": "^2.19.2"
+  },
+  "overrides": {
+    "moment": {
+      "main": "min/moment-with-locales.min.js"   
+    }
   }
 }
