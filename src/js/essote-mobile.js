@@ -554,6 +554,22 @@
       $(document).on("backbutton", $.proxy(this._onBackButtonClick, this));
       $(document).on("pause", $.proxy(this._onPause, this));
       $(document).on("resume", $.proxy(this._onResume, this));
+      
+      if (window.FirebasePlugin) {
+        window.FirebasePlugin.subscribe('events', function() {
+          console.log("Subscribed to events");
+        });
+        
+        window.FirebasePlugin.subscribe('news', function() {
+          console.log("Subscribed to news");
+        });
+        
+        window.FirebasePlugin.onNotificationOpen((notification) => {
+          console.log("Received push notification");
+        }, (error) => {
+            console.error(error);
+        });
+      }
     },
     
     _onWindowResize: function () {
