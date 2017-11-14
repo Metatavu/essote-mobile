@@ -566,6 +566,11 @@
     
     _onSlideChangeTransitionStart: function () {
       this._sliding = true;
+      if (this._controllerStack.length <= (this._swiper.activeIndex + 1)) {
+        if ($('.list-link.active').length) {
+          this._slideToItem($('.list-link.active'));
+        }
+      }
     },
     
     _onSlidePrevTransitionEnd: function () {
@@ -762,6 +767,29 @@
       };
     },
     
+    _slideToItem: function (item) {
+      item.addClass('active');
+      
+      const listItemId = item.attr('data-id');
+      const listItemLevel = parseInt(item.attr('data-level'), 10);
+      
+      this._getItemController(this._getActiveController(), listItemId)
+        .then((itemController) => {
+          this._controllerStack.push(itemController);
+
+          const slidesToRemove = [];
+          for (let i = listItemLevel + 1; i <= this.options.maxLevel; i++) {
+            slidesToRemove.push(i);
+          }
+
+          this._swiper.removeSlide(slidesToRemove);
+          this._swiper.appendSlide(this._getActiveController().getHtml());
+          this._swiper.slideNext();
+        });
+      
+      $('.list-link').removeClass('active');
+    },
+    
     _onItemChange: function (event, data) {
       const itemController = data.itemController;
       const id = itemController.getId();
@@ -805,26 +833,7 @@
       }
       
       const item = $(event.target).closest('.list-link');      
-      item.addClass('active');
-      
-      const listItemId = item.attr('data-id');
-      const listItemLevel = parseInt(item.attr('data-level'), 10);
-      
-      this._getItemController(this._getActiveController(), listItemId)
-        .then((itemController) => {
-          this._controllerStack.push(itemController);
-
-          const slidesToRemove = [];
-          for (let i = listItemLevel + 1; i <= this.options.maxLevel; i++) {
-            slidesToRemove.push(i);
-          }
-
-          this._swiper.removeSlide(slidesToRemove);
-          this._swiper.appendSlide(this._getActiveController().getHtml());
-          this._swiper.slideNext();
-        });
-      
-      $('.list-link').removeClass('active');
+      this._slideToItem(item);
     },
     
     _onBackBtnTouchEnd: function(e) {
