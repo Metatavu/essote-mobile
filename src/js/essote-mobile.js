@@ -550,6 +550,8 @@
       this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
       
       $(window).resize(this._onWindowResize.bind(this));
+      
+      $(document).on("backbutton", $.proxy(this._onBackButtonClick, this));
     },
     
     _onWindowResize: function () {
@@ -573,6 +575,14 @@
     _onSlideNextTransitionEnd: function () {
       this._sliding = false;
       this._refreshPage();
+    },
+    
+    _onBackButtonClick: function (event) {
+      if (this._controllerStack.length > 1) {
+        this._swiper.slidePrev();
+      } else {
+        navigator.app.exitApp();
+      }
     },
     
     _onTaskQueueCallback: function (task, callback) {
