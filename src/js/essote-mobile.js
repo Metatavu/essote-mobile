@@ -570,7 +570,17 @@
     
     _onSlidePrevTransitionEnd: function () {
       this._sliding = false;
-      this._controllerStack.pop();
+      if (this._controllerStack.length > (this._swiper.activeIndex + 1)) {
+        this._controllerStack.pop();
+        
+        const slidesToRemove = [];
+        for (let i = this._swiper.activeIndex + 1; i <= this.options.maxLevel; i++) {
+          slidesToRemove.push(i);
+        }
+
+        this._swiper.removeSlide(slidesToRemove);
+      }
+      
       this._refreshPage();
     },
     
