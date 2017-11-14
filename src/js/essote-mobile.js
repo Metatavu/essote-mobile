@@ -552,6 +552,8 @@
       $(window).resize(this._onWindowResize.bind(this));
       
       $(document).on("backbutton", $.proxy(this._onBackButtonClick, this));
+      $(document).on("pause", $.proxy(this._onPause, this));
+      $(document).on("resume", $.proxy(this._onResume, this));
     },
     
     _onWindowResize: function () {
@@ -583,6 +585,14 @@
       } else {
         navigator.app.exitApp();
       }
+    },
+    
+    _onPause: function () {
+      this._taskQueue.pause();
+    },
+    
+    _onResume: function () {
+      this._taskQueue.resume();
     },
     
     _onTaskQueueCallback: function (task, callback) {
