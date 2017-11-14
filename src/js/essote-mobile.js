@@ -504,6 +504,10 @@
         });
     }
     
+    deleteItem(id) {
+      return this.executeSql("DELETE FROM Item WHERE id = ?", [id]);
+    }
+    
   } 
   
   $.widget("custom.essoteMobile", {
@@ -536,6 +540,7 @@
       this.element.on('touchstart', '.list-link', $.proxy(this._onListItemTouchStart, this));
       this.element.on('touchend', '.list-link', $.proxy(this._onListItemTouchEnd, this));
       this.element.on('itemChange', $.proxy(this._onItemChange, this));
+      this.element.on('itemDelete', $.proxy(this._onItemDelete, this));
       
       this._swiper.slideNext();
       this._refreshPage();
@@ -575,9 +580,24 @@
         case 'item':
           this._persistItem(task.itemController).then(() => {
             task.itemController.getChildren().then((children) => {
+              const parentId = task.itemController.getId();
+              const childIds = [];
+              
               children.forEach((child) => {
                 this._taskQueue.push({type: 'item', 'itemController': child}, 0);
+                childIds.push(child.getId());
               });
+              
+              this._itemDatabase.listItemsByParentId(parentId)
+                .then((existing) => {
+                  const deletedChildren = existing.filter((existing) => {
+                    return childIds.indexOf(existing.id) === -1;
+                  });
+                  
+                  deletedChildren.forEach((deletedChild) => {
+                    this._deleteItem(parentId, deletedChild.id);
+                  });
+                });
 
               setTimeout(() => {
                 callback();
@@ -646,6 +666,15 @@
       });
     },
     
+    _deleteItem: function (parentId, itemId) {
+      this._itemDatabase.deleteItem(itemId)
+        .then(() => {
+          this.element.trigger('itemDelete', {
+            parentId: parentId
+          });
+        });
+    },
+    
     _getItemController: function (parentController, id) {
       return this._findStoredItem(id)
         .then((item) => {
@@ -709,6 +738,14 @@
       const parentId = itemController.getParentId();
       
       if (parentId === this._getActiveController().getId() || id === this._getActiveController().getId()) {
+        this._refreshPage();
+      }
+    },
+    
+    _onItemDelete: function (event, data) {
+      const parentId = data.parentId;
+      
+      if (parentId === this._getActiveController().getId()) {
         this._refreshPage();
       }
     },
