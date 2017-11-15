@@ -9,6 +9,6 @@
   "author": "Metatavu Oy",
   "license": "AGPL-3.0",
   "dependencies": {
-    "soteapi-client": "0.0.17"
+    "soteapi-client": "0.0.18"
   }
 }

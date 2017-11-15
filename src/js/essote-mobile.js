@@ -16,6 +16,8 @@
           return new LinkContentController(parent, item);
         case 'NEWS':
           return new NewsContentController(parent, item);
+        case 'EVENT':
+          return new EventContentController(parent, item);
       }
     }
     
@@ -89,15 +91,23 @@
           return moment().startOf('isoWeek').format();
         case 'WEEK_END':
           return moment().endOf('isoWeek').format();
+        case 'DAY_START':
+          return moment().startOf('day').format();
+        case 'DAY_END':
+          return moment().endOf('day').format();
+        case 'TOMORROW_MORNING':
+          return moment().add(1, 'days').hour(8).minute(0).format();
       }
       
       return moment(value).format();
     }
     
     getLocalizedValue (localizedValue, locale) {
-      for (let i = 0; i < localizedValue.length; i++) {
-        if (localizedValue[i].language === locale) {
-          return localizedValue[i].value;
+      if (localizedValue) {
+        for (let i = 0; i < localizedValue.length; i++) {
+          if (localizedValue[i].language === locale) {
+            return localizedValue[i].value;
+          }
         }
       }
       
@@ -177,7 +187,7 @@
               id: itemController.getId(),
               icon: itemController.getIcon(),
               name: itemController.getTitle(),
-              level: this.isNewsRoot() ? item.level + 1 : item.level,
+              level: this.isVirtualLevel() ? item.level + 1 : item.level,
               link: this.getLocalizedValue(item.content, 'FI')
             })
           });
@@ -187,7 +197,7 @@
               id: itemController.getId(),
               icon: itemController.getIcon(),
               name: itemController.getTitle(),
-              level: this.isNewsRoot() ? item.level + 1 : item.level
+              level: this.isVirtualLevel() ? item.level + 1 : item.level
             })
           });
       }
@@ -197,18 +207,73 @@
       return this.processPageContent(this.getLocalizedValue(this.getItem().content, 'FI'));
     }
     
-    isNewsRoot() {
-      return !!$('<pre>').html(this.getContentHtml()).find('.sote-api-news-root').length;
+    isVirtualLevel() {
+      return !!this.getCustomChildrenList().length;
+    }
+    
+    getCustomChildrenTypeList(type, options) {
+      switch (type) {
+        case 'EVENT':
+          return this.getEventsApi().listEvents(options.event).then((events) => {
+            return events.map((event) => {
+              return Object.assign({}, event, {
+                order: event.startDate.getTime(),
+                item: Object.assign({}, event, {
+                  type: 'EVENT',
+                  level: 0
+                })
+              });
+            });
+          });
+        case 'NEWS':
+          return this.getContentsApi().listContents({ type: ['NEWS'] }).then((newsArticles) => {
+            return newsArticles.map((newsArticle) => {
+              return Object.assign({}, newsArticle, {
+                order: newsArticle.created.getTime(),
+                item: newsArticle
+              });
+            });
+          });
+      }
+    }
+    
+    getCustomChildren(types, options) {
+      const childPromises = types.map((type) => { 
+        return this.getCustomChildrenTypeList(type, options); 
+      });
+      
+      return Promise.all(childPromises)
+        .then((resultDatas) => {
+          const results = _.flatten(resultDatas);
+          results.sort((a, b) => {
+            return b.order - a.order;
+          });
+          
+          return _.map(results, (result) => {
+            return ContentControllerFactory.createContentController(result.item.type, this, result.item);
+          });
+        });
+    }
+    
+    getCustomChildrenList() {
+      return $('<pre>').html(this.getContentHtml()).find('.sote-api-child-list');
+    }
+    
+    getCustomChildrenOptions(customChildrenList) {
+      return {
+        sort: customChildrenList.attr('data-sort'),
+        event: {
+          category: customChildrenList.attr('data-event-category'),
+          endsAfter: this.parseTimeFilter($(customChildrenList).attr('data-event-ends-after')),
+          startsBefore: this.parseTimeFilter($(customChildrenList).attr('data-event-starts-before'))  
+        }
+      };
     }
     
     getChildren() {
-      if (this.isNewsRoot()) {
-        return this.getContentsApi().listContents({ type: ['NEWS']})
-          .then((children) => {
-            return _.map(children, (child) => {
-              return ContentControllerFactory.createContentController(child.type, this, child);
-            });
-        });
+      const customChildrenList = this.getCustomChildrenList();
+      if (customChildrenList.length) {
+        return this.getCustomChildren(customChildrenList.attr('data-types').split(','), this.getCustomChildrenOptions(customChildrenList));
       } else {
         return this.getContentsApi().listContents({ parentId: this.id, type: ['PAGE', 'LINK']})
           .then((children) => {
@@ -237,7 +302,7 @@
         }
       });
       
-      result.find('.sote-api-news-root').empty();
+      result.find('.sote-api-child-list').empty();
       
       return result.html();
     }
@@ -366,10 +431,11 @@
     }
     
     getContentHtml() {
-      const date = null;
+      const date = this.getItem().created;
       const newsImage = null;
       
       return pugNewsContent({
+        moment: moment,
         date: date,
         newsImage: newsImage,
         title: this.getTitle(),
@@ -378,6 +444,33 @@
     }
     
   };
+  
+  class EventContentController extends ContentController {
+    
+    getType() {
+      return 'EVENT';
+    }
+    
+    getHtml() {
+      return pugNewsView({
+        title: this.getTitle()
+      });
+    }
+    
+    getContentHtml() {
+      const date = this.getItem().startDate;
+      const newsImage = null;
+      
+      return pugNewsContent({
+        moment: moment,
+        date: date,
+        newsImage: newsImage,
+        title: this.getTitle(),
+        content: this.getLocalizedValue(this.getItem().description, 'FI')
+      });
+    }
+    
+  }
   
   class Database {
     
@@ -468,7 +561,7 @@
     
     constructor(startClean) {
       const prepareStatements = startClean ? ['DROP TABLE IF EXISTS Item'] : [];
-      prepareStatements.push('CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext)');
+      prepareStatements.push('CREATE TABLE IF NOT EXISTS Item (id varchar(255) primary key, parentId varchar(255), data longtext, orderIndex bigint(20))');
       
       super({
         database: 'essote-mobile.db',
@@ -482,24 +575,24 @@
     }
     
     listItemsByParentId(parentId) {
-      return this.list('SELECT id, data FROM Item WHERE parentId = ?', [parentId]);
+      return this.list('SELECT id, data FROM Item WHERE parentId = ? order by orderIndex', [parentId]);
     }
     
-    insertItem(id, parentId, data) {
-      return this.executeSql('INSERT INTO Item (id, parentId, data) VALUES (?, ?, ?)', [id, parentId, data]);
+    insertItem(id, parentId, data, orderIndex) {
+      return this.executeSql('INSERT INTO Item (id, parentId, data, orderIndex) VALUES (?, ?, ?, ?)', [id, parentId, data, orderIndex]);
     }
     
-    updateItem(id, parentId, data) {
-      return this.executeSql('UPDATE Item SET data = ?, parentId = ? WHERE id = ?', [data, parentId, id]);
+    updateItem(id, parentId, data, orderIndex) {
+      return this.executeSql('UPDATE Item SET data = ?, parentId = ?, orderIndex = ? WHERE id = ?', [data, parentId, orderIndex, id]);
     }
     
-    upsertItem(id, parentId, data) {
+    upsertItem(id, parentId, data, orderIndex) {
       return this.findItemById(id)
         .then((row) => {
           if (row) {
-            return this.updateItem(id, parentId, data);
+            return this.updateItem(id, parentId, data, orderIndex);
           } else {
-            return this.insertItem(id, parentId, data);
+            return this.insertItem(id, parentId, data, orderIndex);
           }
         });
     }
@@ -629,13 +722,18 @@
     _onTaskQueueCallback: function (task, callback) {
       switch (task.type) {
         case 'item':
-          this._persistItem(task.itemController).then(() => {
+          this._persistItem(task.itemController, task.orderIndex).then(() => {
             task.itemController.getChildren().then((children) => {
               const parentId = task.itemController.getId();
               const childIds = [];
               
-              children.forEach((child) => {
-                this._taskQueue.push({type: 'item', 'itemController': child}, 0);
+              children.forEach((child, index) => {
+                this._taskQueue.push({
+                  type: 'item', 
+                  itemController: child, 
+                  orderIndex: index
+                }, 0);
+                
                 childIds.push(child.getId());
               });
               
@@ -661,7 +759,11 @@
     
     _onTaskQueueDrain: function () {
       this.queueTimeout = this.options.queue.timeout;
-      this._taskQueue.push({type: 'item', 'itemController': this._rootController}, 0);
+      this._taskQueue.push({
+        type: 'item', 
+        itemController: this._rootController,
+        orderIndex: 0
+      }, 0);
     },
     
     _findStoredItem: function (id) {
@@ -677,9 +779,9 @@
       });
     },
     
-    _upsertStoredItem: function (id, parentId, item) {
+    _upsertStoredItem: function (id, parentId, item, orderIndex) {
       return new Promise((resolve) => {
-        return this._itemDatabase.upsertItem(id, parentId, JSON.stringify(item))
+        return this._itemDatabase.upsertItem(id, parentId, JSON.stringify(item), orderIndex)
           .then(() => {
             resolve();
           })
@@ -690,7 +792,7 @@
       });
     },
     
-    _persistItem: function (itemController) {
+    _persistItem: function (itemController, orderIndex) {
       const id = itemController.getId();
       const parentId = itemController.getParentId();
       const newItem = itemController.getItem();
@@ -703,7 +805,7 @@
       return this._findStoredItem(id).then((result) => {
         const oldItem = result;
         if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
-          return this._upsertStoredItem(id, parentId, newItem)
+          return this._upsertStoredItem(id, parentId, newItem, orderIndex)
             .then(() => {
               this.element.trigger('itemChange', {
                 itemController: itemController
