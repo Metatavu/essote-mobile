@@ -663,6 +663,8 @@
             console.error(error);
         });
       }
+      
+      this._needsRefresh = false;
     },
     
     _onWindowResize: function () {
@@ -695,7 +697,10 @@
         this._swiper.removeSlide(slidesToRemove);
       }
       
-      this._refreshPage();
+      if (this._needsRefresh) {
+        this._needsRefresh = false;
+        this._refreshPage();
+      }
     },
     
     _onSlideNextTransitionEnd: function () {
@@ -915,6 +920,8 @@
       
       if (parentId === this._getActiveController().getId() || id === this._getActiveController().getId()) {
         this._refreshPage();
+      } else {
+        this._needsRefresh = true;
       }
     },
     
@@ -923,6 +930,8 @@
       
       if (parentId === this._getActiveController().getId()) {
         this._refreshPage();
+      } else {
+        this._needsRefresh = true;
       }
     },
     
