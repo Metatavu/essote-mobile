@@ -615,6 +615,8 @@
     },
 
     _create : function() {
+      $(document.body).addClass('index-page-active');
+        
       SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
       this.queueTimeout = this.options.queue.initialTimeout;
       
@@ -632,6 +634,7 @@
       this.element.on('touchend', '.back-btn', $.proxy(this._onBackBtnTouchEnd, this));
       this.element.on('touchstart', '.list-link', $.proxy(this._onListItemTouchStart, this));
       this.element.on('touchend', '.list-link', $.proxy(this._onListItemTouchEnd, this));
+      this.element.on('touchend', '.home-btn', $.proxy(this._onHomeBtnTouchEnd, this));
       this.element.on('itemChange', $.proxy(this._onItemChange, this));
       this.element.on('itemDelete', $.proxy(this._onItemDelete, this));
       
@@ -686,15 +689,20 @@
     
     _onSlidePrevTransitionEnd: function () {
       this._sliding = false;
-      if (this._controllerStack.length > (this._swiper.activeIndex + 1)) {
+      
+      while (this._controllerStack.length > (this._swiper.activeIndex + 1)) {
         this._controllerStack.pop();
-        
-        const slidesToRemove = [];
-        for (let i = this._swiper.activeIndex + 1; i <= this.options.maxLevel; i++) {
-          slidesToRemove.push(i);
-        }
+      }
 
-        this._swiper.removeSlide(slidesToRemove);
+      const slidesToRemove = [];
+      for (let i = this._swiper.activeIndex + 1; i <= this.options.maxLevel; i++) {
+        slidesToRemove.push(i);
+      }
+
+      this._swiper.removeSlide(slidesToRemove);
+
+      if (this._swiper.activeIndex === 0) {
+        $(document.body).addClass('index-page-active');
       }
       
       if (this._needsRefresh) {
@@ -704,6 +712,7 @@
     },
     
     _onSlideNextTransitionEnd: function () {
+      $(document.body).removeClass('index-page-active');
       this._sliding = false;
       this._refreshPage();
     },
@@ -965,6 +974,10 @@
     
     _onBackBtnTouchEnd: function(e) {
       this._swiper.slidePrev();
+    },
+    
+    _onHomeBtnTouchEnd: function () {
+      this._swiper.slideTo(0, 300);
     }
     
   });

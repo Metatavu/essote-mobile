@@ -291,3 +291,32 @@ body {
     }
   }
 }
+
+a.btn.home-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  font-size: 32px;
+  color: $home-button-color;
+  background: $home-button-background;
+  border-radius: 50px;
+  border: 0;
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  z-index: 999999;
+  padding: 0;
+  
+  &:focus,
+  &:active {
+    color: $home-button-color;
+  }
+}
+
+.index-page-active {
+  
+  .home-btn {
+    display: none;
+  }
+  
+}
