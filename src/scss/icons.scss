@@ -24,23 +24,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-toimipisteet:before {
+.icon-toimipisteet::before {
   content: "\e900";
 }
 
-.icon-100-ideaa-etela-savossa:before,
-.icon-ajankohtaista:before {
+.icon-100-ideaa-etela-savossa::before,
+.icon-ajankohtaista::before {
   content: "\e901";
 }
 
-.icon-palvelut:before {
+.icon-palvelut::before {
   content: "\e902";
 }
 
-.icon-paivystys:before {
+.icon-paivystys::before {
   content: "\e903";
 }
 
-.icon-ota-yhteytta:before {
+.icon-ota-yhteytta::before {
   content: "\e904";
 }

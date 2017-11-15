@@ -214,7 +214,7 @@
     getCustomChildrenTypeList(type, options) {
       switch (type) {
         case 'EVENT':
-          return this.getEventsApi().listEvents(options['event']).then((events) => {
+          return this.getEventsApi().listEvents(options.event).then((events) => {
             return events.map((event) => {
               return Object.assign({}, event, {
                 order: event.startDate.getTime(),
@@ -225,7 +225,6 @@
               });
             });
           });
-        break;
         case 'NEWS':
           return this.getContentsApi().listContents({ type: ['NEWS'] }).then((newsArticles) => {
             return newsArticles.map((newsArticle) => {
@@ -235,7 +234,6 @@
               });
             });
           });
-        break;
       }
     }
     
@@ -472,7 +470,7 @@
       });
     }
     
-  };
+  }
   
   class Database {
     
