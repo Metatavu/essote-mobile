@@ -145,11 +145,19 @@ body {
       border-radius: 50%;
       font-size: 40px;
       vertical-align: middle;
-      margin-right: 20px;   
+      margin-right: 20px;  
+      
+      &.icon-100-ideaa-etela-savossa {
+        background: $subpage-icon-100-ideaa-etela-savossa;  
+      }
+      
+      &.icon-ajankohtaista {
+        background: $subpage-icon-ajankohtaista;
+      }
     }
-    
+        
     .fa-angle-right {
-      color: #97c11f;
+      color: #000;
       font-size: 35px;
       position: absolute;
       right: 20px;
@@ -184,6 +192,14 @@ body {
 
 .page-view .content-page-content {
   text-align: center;
+}
+
+.news-view .content-page-content {
+  
+  .news-date-container {
+    color: $news-date-color;
+  }
+  
 }
 
 .content-page-content {

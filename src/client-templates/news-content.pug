@@ -1,12 +1,12 @@
 if newsImage
   .news-image-container
     img.mx-auto.img-fluid(src=newsImage)
-if date
-  .news-date-container
-    span.news.date
-    =date
 .news-content-container
   h3.news-title 
     =title
+  if date
+    .news-date-container
+      span.news.date
+        =moment(date).format('LLLL')
   .news-content
     !=content
