@@ -1,4 +1,9 @@
 li.content-page.list-group-item.list-link(data-level=item.level, data-id=item.id)
-  i.link-icon(class=item.icon)
-  !=item.name
-  i.fa.fa-angle-right.float-right
+  .row
+    if item.icon
+      .col-1
+        i.link-icon(class=item.icon)
+    .col
+      !=item.name
+    .col-1
+      i.fa.fa-angle-right
