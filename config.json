@@ -5,7 +5,7 @@
     "secure": true
   },
   "generic": {
-    "defaultSrc": "'self' http: https: data: gap: ws: wss: https://ssl.gstatic.com *.metatavu.io *.essote.fi 'unsafe-inline'",
+    "defaultSrc": "'self' about:blank http: https: data: gap: ws: wss: https://ssl.gstatic.com *.metatavu.io *.essote.fi 'unsafe-inline'",
     "styleSrc": "'self' http: https: *.metatavu.io *.essote.fi 'unsafe-inline'",
     "mediaSrc": "*"
   }

@@ -60,7 +60,7 @@
     }
     
     getIcon() {
-      return `icon-${this.item.category}`;
+      return this.item.category ? `icon-${this.item.category}` : null;
     }
     
     getChildren() {
@@ -351,7 +351,11 @@
     }
     
     getContentHtml() {
-      return $('<pre>').append($('<iframe>')).html(); 
+      return $('<pre>').append(
+              $('<div>')
+                .addClass('frame-container')
+                .append($('<iframe>').attr('scrolling', 'yes'))
+            ).html(); 
     }
     
     processIframe(iframe) {

@@ -145,7 +145,6 @@ body {
       border-radius: 50%;
       font-size: 40px;
       vertical-align: middle;
-      margin-right: 20px;  
       
       &.icon-100-ideaa-etela-savossa {
         background: $subpage-icon-100-ideaa-etela-savossa;  
@@ -159,16 +158,11 @@ body {
     .fa-angle-right {
       color: #000;
       font-size: 35px;
-      position: absolute;
-      right: 20px;
-      top: 10px;
     }
   }
     
   .external-link a {
     color: $content-external-link-color;
-    width: 100%;
-    position: absolute;
   }
     
 }
@@ -228,11 +222,22 @@ body {
 
 .content-page-content {
   
+  .frame-container {
+    position: absolute;
+    top: 77px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important
+  }
+
   iframe {
     width: 100%;
     position: absolute;
-    top: 77px;
-    height: calc(100% - 77px);
+    top: 0;
+    height: 100%;
     left: 0;
     border: 0;
   }

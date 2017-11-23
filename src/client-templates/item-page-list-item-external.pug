@@ -1,5 +1,10 @@
 li.content-page.list-group-item.external-link(data-level=item.level, data-id=item.id)
-  i.link-icon(class=item.icon)
-  a(href=item.link,target="_blank")
-    !=item.name
-  i.fa.fa-angle-right.float-right
+  .row
+    if item.icon
+      .col-1
+        i.link-icon(class=item.icon)
+    .col
+      a(href="#", onclick="window.open('" + item.link + "', '_system');") 
+        !=item.name
+    .col-1
+      i.fa.fa-angle-right
