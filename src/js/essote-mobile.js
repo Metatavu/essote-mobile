@@ -6,18 +6,18 @@
   
   class ContentControllerFactory {
     
-    static createContentController(type, parent, item) {
+    static createContentController(type, parentId, item) {
       switch (type) {
         case 'ROOT':
-          return new RootContentController(parent, item);
+          return new RootContentController(parentId, item);
         case 'PAGE':
-          return new PageContentController(parent, item);
+          return new PageContentController(parentId, item);
         case 'LINK':
-          return new LinkContentController(parent, item);
+          return new LinkContentController(parentId, item);
         case 'NEWS':
-          return new NewsContentController(parent, item);
+          return new NewsContentController(parentId, item);
         case 'EVENT':
-          return new EventContentController(parent, item);
+          return new EventContentController(parentId, item);
       }
     }
     
@@ -25,10 +25,10 @@
  
   class ContentController {
     
-    constructor(parent, item) {
+    constructor(parentId, item) {
       this.item = item;
       this.id = item ? item.id : null;
-      this.parentId = parent ? parent.getId() : null;
+      this.parentId = parentId;
     }
     
     getId() {
@@ -157,7 +157,7 @@
       return this.getContentsApi().listContents({ parentId: 'ROOT', type: ['PAGE', 'LINK']})
         .then((children) => {
           return _.map(children, (child) => {
-            return ContentControllerFactory.createContentController(child.type, this, child);
+            return ContentControllerFactory.createContentController(child.type, this.getId(), child);
           });
         });
     }
@@ -250,7 +250,7 @@
           });
           
           return _.map(results, (result) => {
-            return ContentControllerFactory.createContentController(result.item.type, this, result.item);
+            return ContentControllerFactory.createContentController(result.item.type, this.getId(), result.item);
           });
         });
     }
@@ -278,7 +278,7 @@
         return this.getContentsApi().listContents({ parentId: this.id, type: ['PAGE', 'LINK']})
           .then((children) => {
             return _.map(children, (child) => {
-              return ContentControllerFactory.createContentController(child.type, this, child);
+              return ContentControllerFactory.createContentController(child.type, this.getId(), child);
             });
         });
       }
@@ -605,7 +605,50 @@
       return this.executeSql("DELETE FROM Item WHERE id = ?", [id]);
     }
     
-  } 
+  }
+  
+  class RecursiveItemControllerLocator {
+    
+    constructor() {
+      this.located = {
+        parentControllers: [],
+        controller: null
+      };
+    }
+    
+    find(parentControllers, id) {
+      if (this.located.controller) {
+        return true;
+      }
+
+      const parentController = parentControllers[parentControllers.length - 1];
+      
+      return parentController.getChildren().then((childControllers) => {
+        if (this.located.controller) {
+          return true;
+        }
+        
+        for (let i = 0; i < childControllers.length; i++) {
+          if (childControllers[i].getId() === id) {
+            this.located.controller = childControllers[i];
+            this.located.parentControllers = parentControllers;
+            return true;
+          }
+        }
+        
+        return Promise.all(childControllers.map((childController) => {
+          return this.find(parentControllers.concat([childController]), id);
+        }));
+      });
+    }
+    
+    locate (parentController, id) {
+      return this.find([parentController], id)
+        .then(() => {
+          return this.located;
+        }); 
+    }
+  }
   
   $.widget("custom.essoteMobile", {
     
@@ -613,7 +656,7 @@
       maxLevel: 5,
       touchSlideSlack: 10,
       queue: {
-        initialTimeout: 100,
+        priorityTimeout: 100,
         timeout: 2000
       }
     },
@@ -622,7 +665,7 @@
       $(document.body).addClass('index-page-active');
         
       SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
-      this.queueTimeout = this.options.queue.initialTimeout;
+      this._startPriorityUpdate();
       
       this._rootController = new RootContentController();
       this._controllerStack = [this._rootController];
@@ -665,13 +708,23 @@
         });
         
         window.FirebasePlugin.onNotificationOpen((notification) => {
-          console.log("Received push notification");
+          const soteApiEvent = notification ? notification.soteApiEvent : null;
+          if (soteApiEvent === 'ITEM-CREATED') {
+            const itemId = notification.itemId;
+            const itemType = notification.itemType;
+            this._startPriorityUpdate();
+            this._waitAndSlideTo({ "type": itemType , "id": itemId });
+          }
         }, (error) => {
             console.error(error);
         });
       }
       
       this._needsRefresh = false;
+    },
+    
+    _startPriorityUpdate: function () {
+      this.queueTimeout = this.options.queue.priorityTimeout;
     },
     
     _onWindowResize: function () {
@@ -859,7 +912,7 @@
         .then((result) => {
           const item = result ? result.item : null;
           if (item) {
-            return ContentControllerFactory.createContentController(item.type, parentController, item);
+            return ContentControllerFactory.createContentController(item.type, parentController ? parentController.getId() : null, item);
           } else {
             console.error(`Could not find item by id ${id}`);
             return null;
@@ -873,7 +926,7 @@
           .then((results) => {
             resolve(results.map((result) => {
               const item = JSON.parse(result.data);
-              return ContentControllerFactory.createContentController(item.type, parentController, item);
+              return ContentControllerFactory.createContentController(item.type, parentController ? parentController.getId() : null, item);
             }));
           })
           .catch(() => {
@@ -884,23 +937,29 @@
     
     _refreshChildPages: function () {
       return new Promise((resolve) => {
-        $('.swiper-slide-active .child-items-container').empty();
-        this._listByParent(this._getActiveController()).then((childPages) => {
-          childPages.forEach((childPage) => {
-            const itemHtml = this._getActiveController().getChildListItemHtml(childPage);
-            $('.swiper-slide-active .child-items-container').append(itemHtml);
-          });
-          
+        if (this._sliding) {
           resolve();
-        });
+        } else {
+          $('.swiper-slide-active .child-items-container').empty();
+          this._listByParent(this._getActiveController()).then((childPages) => {
+            childPages.forEach((childPage) => {
+              const itemHtml = this._getActiveController().getChildListItemHtml(childPage);
+              $('.swiper-slide-active .child-items-container').append(itemHtml);
+            });
+
+            resolve();
+          });
+        }
       });
     },
     
     _refreshPage: function () {
       this._refreshChildPages().then(() => {
-        this._getActiveController().onBeforePageRefresh($('.swiper-slide-active .content-page-content'));
-        $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
-        this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
+        if (!this._sliding) {
+          this._getActiveController().onBeforePageRefresh($('.swiper-slide-active .content-page-content'));
+          $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
+          this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
+        }
       });
     },
     
@@ -910,6 +969,82 @@
         x: touch.pageX,
         y: touch.pageY
       };
+    },
+    
+    _waitAndFindItemStored: function (id, timeoutAt) {
+      return new Promise((resolve, reject) => {
+        this._itemDatabase.findItemById(id)
+          .then((item) => {
+            if (item) {
+              resolve(item);
+            } else {
+              if (timeoutAt < (new Date().getTime())) {
+                reject('timeout');
+              } else {
+                setTimeout(() => {
+                  this._waitAndFindItemStored(id, timeoutAt).then(resolve);
+                }, 100);
+              }
+            }
+          })
+          .catch(() => {
+            if (timeoutAt < (new Date().getTime())) {
+              reject('timeout');
+            } else {
+              setTimeout(() => {
+                this._waitAndFindItemStored(id, timeoutAt).then(resolve);
+              }, 100);
+            }
+          });
+      });
+    },
+    
+    _startLoading: function () {
+      $(document.body).addClass('loading');
+      this._loading = true;
+    },
+    
+    _stopLoading: function () {
+      $(document.body).removeClass('loading');
+      this._loading = false;
+    },
+    
+    _waitAndSlideTo: function (item) {
+      this._swiper.slideTo(0, 0);
+      const id = `${item.type}-${item.id}`;
+      this._startLoading();
+      
+      this._waitAndFindItemStored(id, (new Date()).getTime() + (1000 * 60))
+        .then(() => {
+          (new RecursiveItemControllerLocator())
+            .locate(this._rootController, id)
+            .then((located) => {
+              if (located.controller) {
+                const itemControllers = located.parentControllers.concat([located.controller]);
+                itemControllers.forEach((itemController) => {
+                  if (itemController.getId() !== 'ROOT') {
+                    this._controllerStack.push(itemController);
+                    this._swiper.appendSlide(this._getActiveController().getHtml());
+                  }
+                });
+
+                this._swiper.slideTo(itemControllers.length - 1, 0);
+                this._needsRefresh = true;
+              } else {
+                console.error(`Failed to locate page ${id}`);
+              }
+              
+              this._stopLoading();
+            })
+            .catch((err) => {
+              this._stopLoading();
+              console.error(err);
+            });
+        })
+        .catch((err) => {
+          this._stopLoading();
+          console.error(err);
+        });
     },
     
     _slideToItem: function (item) {
@@ -929,6 +1064,7 @@
 
           this._swiper.removeSlide(slidesToRemove);
           this._swiper.appendSlide(this._getActiveController().getHtml());
+          
           this._swiper.slideNext();
         });
       
