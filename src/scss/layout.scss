@@ -12,6 +12,19 @@ html, body {
 body {
   margin: 0;
   padding: 0;
+  
+  &.loading {
+    background-image: url("../gfx/loader-big.svg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100%;
+    width: 100%;
+    
+    * {
+      opacity: 0;
+    }
+  }
+  
 }
 
 .swiper-container {
