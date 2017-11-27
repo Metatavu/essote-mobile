@@ -571,7 +571,7 @@
     }
     
     findItemById(id) {
-      return this.find('SELECT id, data FROM Item WHERE id = ?', [id]);
+      return this.find('SELECT id, data, orderIndex FROM Item WHERE id = ?', [id]);
     }
     
     listItemsByParentId(parentId) {
@@ -784,7 +784,7 @@
       return new Promise((resolve) => {
         return this._itemDatabase.findItemById(id)
           .then((item) => {
-            resolve(item ? JSON.parse(item.data) : null);
+            resolve(item ? { item: JSON.parse(item.data), orderIndex: item.orderIndex } : null);
           })
           .catch((err) => {
             console.error(`Failed to retrieve persisted item ${id}`, err);
@@ -817,8 +817,10 @@
       }
       
       return this._findStoredItem(id).then((result) => {
-        const oldItem = result;
-        if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+        const oldItem = result.item;
+        const oldOrderIndex = result.orderIndex;
+        
+        if ((oldOrderIndex !== orderIndex) || (JSON.stringify(oldItem) !== JSON.stringify(newItem))) {
           return this._upsertStoredItem(id, parentId, newItem, orderIndex)
             .then(() => {
               this.element.trigger('itemChange', {
@@ -844,8 +846,9 @@
     
     _getItemController: function (parentController, id) {
       return this._findStoredItem(id)
-        .then((item) => {
-          if (item) {
+        .then((result) => {
+          if (result) {
+            const item = result.item;
             return ContentControllerFactory.createContentController(item.type, parentController, item);
           } else {
             console.error(`Could not find item by id ${id}`);
