@@ -699,6 +699,8 @@
       $(document).on("resume", $.proxy(this._onResume, this));
       
       if (window.FirebasePlugin) {
+        window.FirebasePlugin.grantPermission();
+        
         window.FirebasePlugin.subscribe('events', function() {
           console.log("Subscribed to events");
         });
