@@ -99,6 +99,14 @@
           return moment().add(1, 'days').hour(8).minute(0).format();
       }
       
+      if (value.startsWith('add ')) {
+        const parts = value.substring(4).split(' ');
+        return moment().add(parseInt(parts[0]), parts[1]).format();
+      } else if (value.startsWith('subtract ')) {
+        const parts = value.substring(9).split(' ');
+        return moment().subtract(parseInt(parts[0]), parts[1]).format();
+      }
+      
       return moment(value).format();
     }
     
