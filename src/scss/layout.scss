@@ -97,6 +97,7 @@ body {
       text-transform: uppercase;
       font-size: 24px;
       transition: background 0.2s;
+      user-select: none;
       
       &.active {
         background: #8ec63f;
@@ -144,6 +145,10 @@ body {
   overflow-x: hidden;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
+  
+  .list-link {
+  	user-select: none;
+  }
   
   .content-page, .content-link {
     text-transform: uppercase;
