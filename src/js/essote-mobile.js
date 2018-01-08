@@ -767,7 +767,7 @@
       
       url += '/v1';
       return url;
-    }
+    },
     
     _startPriorityUpdate: function () {
       this.queueTimeout = this.options.queue.priorityTimeout;
