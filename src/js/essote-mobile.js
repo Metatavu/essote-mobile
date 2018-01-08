@@ -744,29 +744,14 @@
         secure = getConfig().server.secure;
       }
 
-      let defaultPort;
+      let protocol;
       if (secure) {
-        defaultPort = 443;
+        protocol = 'https';
       } else {
-        defaultPort = 80;
+        protocol = 'http';
       }
       
-      let url = '';
-      if (secure) {
-        url += 'https://';
-      } else {
-        url += 'http://';
-      }
-      
-      url += host;
-      
-      if (port != defaultPort) {
-        url += ':';
-        url += port;
-      }
-      
-      url += '/v1';
-      return url;
+      return `${protocol}://${host}:${port}/v1`;
     },
     
     _startPriorityUpdate: function () {
