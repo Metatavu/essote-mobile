@@ -666,6 +666,11 @@
       queue: {
         priorityTimeout: 100,
         timeout: 2000
+      },
+      server: {
+        host: 'essote-soteapi.metatavu.io',
+        port: 443,
+        secure: true
       }
     },
 
@@ -734,15 +739,9 @@
     },
     
     _getServerUrl: function () {
-      let host = 'essote-soteapi.metatavu.io';
-      let port = 443;
-      let secure = true;
-
-      if (getConfig().server) {
-        host = getConfig().server.host;
-        port = getConfig().server.port;
-        secure = getConfig().server.secure;
-      }
+      let host = this.options.server.host;
+      let port = this.options.server.port;
+      let secure = this.options.server.secure;
 
       let protocol;
       if (secure) {
@@ -1168,9 +1167,13 @@
     const itemDatabase = new ItemDatabase();
     itemDatabase.initialize()
       .then(() => {    
-        $(document.body).essoteMobile({
+        let options = {
           itemDatabase: itemDatabase
-        });
+        };
+        if (getConfig().server) {
+          options.server = getConfig().server;
+        }
+        $(document.body).essoteMobile(options);
       })
       .catch((err) => {
         console.error(err);
