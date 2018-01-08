@@ -672,7 +672,7 @@
     _create : function() {
       $(document.body).addClass('index-page-active');
         
-      SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
+      SoteapiClient.ApiClient.instance.basePath = this._getServerUrl();
       this._startPriorityUpdate();
       
       this._rootController = new RootContentController();
@@ -732,6 +732,42 @@
       
       this._needsRefresh = false;
     },
+    
+    _getServerUrl: function () {
+      let host = 'essote-soteapi.metatavu.io';
+      let port = 443;
+      let secure = true;
+
+      if (getConfig().server) {
+        host = getConfig().server.host;
+        port = getConfig().server.port;
+        secure = getConfig().server.secure;
+      }
+
+      let defaultPort;
+      if (secure) {
+        defaultPort = 443;
+      } else {
+        defaultPort = 80;
+      }
+      
+      let url = '';
+      if (secure) {
+        url += 'https://';
+      } else {
+        url += 'http://';
+      }
+      
+      url += host;
+      
+      if (port != defaultPort) {
+        url += ':';
+        url += port;
+      }
+      
+      url += '/v1';
+      return url;
+    }
     
     _startPriorityUpdate: function () {
       this.queueTimeout = this.options.queue.priorityTimeout;
