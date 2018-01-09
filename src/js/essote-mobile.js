@@ -746,7 +746,7 @@
         this._startPriorityUpdate();
         this._waitAndSlideTo({ "type": itemType , "id": itemId });
       }
-    }
+    },
     
     _getServerUrl: function () {
       let host = this.options.server.host;
