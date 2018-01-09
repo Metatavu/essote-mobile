@@ -16,3 +16,4 @@ npm-debug.log
 /bower_components
 .netbeans.xml
 /src/api-client/node_modules/
+/config.json
