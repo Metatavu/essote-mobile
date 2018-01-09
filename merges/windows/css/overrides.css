@@ -1,0 +1,7 @@
+body.loading {
+  background-image: url("../gfx/loader-big.gif");
+}
+
+.content-page-content.loading {
+  background-image: url("../gfx/loader-big.gif");
+}
