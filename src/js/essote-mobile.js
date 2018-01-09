@@ -718,19 +718,49 @@
         });
         
         window.FirebasePlugin.onNotificationOpen((notification) => {
-          const soteApiEvent = notification ? notification.soteApiEvent : null;
-          if (soteApiEvent === 'ITEM-CREATED') {
-            const itemId = notification.itemId;
-            const itemType = notification.itemType;
-            this._startPriorityUpdate();
-            this._waitAndSlideTo({ "type": itemType , "id": itemId });
-          }
+          this._notificationReceived(notification);
         }, (error) => {
             console.error(error);
         });
       }
       
+      if (window.PushNotification) {
+        const push = window.PushNotification.init({
+          windows: {}
+        });
+        
+        push.on('notification', (data) => {
+          const payload = JSON.parse(data.launchArgs);
+          this._notificationReceived(payload);
+        });
+      }
+      
       this._needsRefresh = false;
+    },
+    
+    _notificationReceived: function(notification) {
+      const soteApiEvent = notification ? notification.soteApiEvent : null;
+      if (soteApiEvent === 'ITEM-CREATED') {
+        const itemId = notification.itemId;
+        const itemType = notification.itemType;
+        this._startPriorityUpdate();
+        this._waitAndSlideTo({ "type": itemType , "id": itemId });
+      }
+    }
+    
+    _getServerUrl: function () {
+      let host = this.options.server.host;
+      let port = this.options.server.port;
+      let secure = this.options.server.secure;
+
+      let protocol;
+      if (secure) {
+        protocol = 'https';
+      } else {
+        protocol = 'http';
+      }
+      
+      return `${protocol}://${host}:${port}/v1`;
     },
     
     _startPriorityUpdate: function () {

@@ -1,39 +1,39 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <widget id="fi.essote.essoteMobile" version="0.0.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-  <name>Essote</name>
-  <description>
+    <name>Essote</name>
+    <description>
         Mobile application for ESSOTE
     </description>
-  <author email="devs@metatavu.fi" href="https://www.metatavu.fi">
+    <author email="devs@metatavu.fi" href="https://www.metatavu.fi">
         Metatavu Oy
     </author>
-  <content src="index.html" />
-  <access origin="*" />
-  <allow-intent href="http://*/*" />
-  <allow-intent href="https://*/*" />
-  <allow-intent href="tel:*" />
-  <allow-intent href="sms:*" />
-  <allow-intent href="mailto:*" />
-  <allow-intent href="geo:*" />
-  <platform name="android">
-    <allow-intent href="market:*" />
-  </platform>
-  <platform name="ios">
-    <allow-intent href="itms:*" />
-    <allow-intent href="itms-apps:*" />
-    <allow-intent href="about:*" />
-    <allow-navigation href="*" />
-  </platform>
-  <engine name="browser" spec="^5.0.1" />
-  <engine name="android" spec="^6.4.0" />
-  <plugin name="cordova-plugin-whitelist" spec="^1.3.3" />
-  <plugin name="cordova-sqlite-storage" spec="^2.1.2" />
-  <plugin name="cordova-plugin-device" spec="^1.1.7" />
-  <plugin name="cordova-plugin-firebase" spec="^0.1.24" />
-  <plugin name="cordova-plugin-inappbrowser" spec="^1.7.2" />
-  <vs:toolsetVersion xmlns:vs="http://schemas.microsoft.com/appx/2014/htmlapps">6.3.1</vs:toolsetVersion>
-  <engine name="android" spec="5.2.1" />
-  <engine name="ios" spec="4.2.0" />
-  <engine name="windows" spec="4.4.2" />
-  <preference name="windows-target-version" value="10.0" />
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+        <allow-intent href="about:*" />
+        <allow-navigation href="*" />
+    </platform>
+    <plugin name="cordova-plugin-whitelist" spec="^1.3.3" />
+    <plugin name="cordova-sqlite-storage" spec="^2.1.2" />
+    <plugin name="cordova-plugin-device" spec="^1.1.7" />
+    <plugin name="cordova-plugin-firebase" spec="^0.1.24" />
+    <plugin name="cordova-plugin-inappbrowser" spec="^1.7.2" />
+    <vs:toolsetVersion xmlns:vs="http://schemas.microsoft.com/appx/2014/htmlapps">6.3.1</vs:toolsetVersion>
+    <preference name="windows-target-version" value="10.0" />
+    <engine name="browser" spec="^5.0.1" />
+    <engine name="android" spec="^6.3.0" />
+    <engine name="ios" spec="^4.5.4" />
+    <engine name="windows" spec="4.4.2" />
+    <plugin name="phonegap-plugin-push" spec="^2.1.2" />
 </widget>
