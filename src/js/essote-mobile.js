@@ -666,13 +666,18 @@
       queue: {
         priorityTimeout: 100,
         timeout: 2000
+      },
+      server: {
+        host: 'essote-soteapi.metatavu.io',
+        port: 443,
+        secure: true
       }
     },
 
     _create : function() {
       $(document.body).addClass('index-page-active');
         
-      SoteapiClient.ApiClient.instance.basePath = 'https://essote-soteapi.metatavu.io/v1';
+      SoteapiClient.ApiClient.instance.basePath = this._getServerUrl();
       this._startPriorityUpdate();
       
       this._rootController = new RootContentController();
@@ -1177,9 +1182,13 @@
     const itemDatabase = new ItemDatabase();
     itemDatabase.initialize()
       .then(() => {    
-        $(document.body).essoteMobile({
+        let options = {
           itemDatabase: itemDatabase
-        });
+        };
+        if (getConfig().server) {
+          options.server = getConfig().server;
+        }
+        $(document.body).essoteMobile(options);
       })
       .catch((err) => {
         console.error(err);

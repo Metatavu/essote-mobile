@@ -57,6 +57,15 @@ module.exports = function(grunt) {
         }]
       }
     },
+    postcss: {
+        options: {
+          map: true,
+          processors: [ require('autoprefixer') ]
+        },
+        dist: {
+          src: 'www/css/*.css'
+        }
+	},
     'pug': {
       compile: {
         options: {
@@ -120,5 +129,5 @@ module.exports = function(grunt) {
     }
   });
   
-  grunt.registerTask('default', [ 'sass', 'pug', 'compile-client-templates', 'generate-config', 'babel', 'bower', 'wiredep', 'browserify:apiclient' ]);
+  grunt.registerTask('default', [ 'sass', 'postcss', 'pug', 'compile-client-templates', 'generate-config', 'babel', 'bower', 'wiredep', 'browserify:apiclient' ]);
 };
