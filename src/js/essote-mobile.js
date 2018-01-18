@@ -729,15 +729,30 @@
         });
       }
       
+      console.log("Trying to initialize PushNotification");
       if (window.PushNotification) {
+        console.log("Initializing PushNotification");
         const push = window.PushNotification.init({
           windows: {}
         });
+        var client = new WindowsAzure.MobileServiceClient("https://essotemobile.azurewebsites.net");
+        if (!client) {
+          console.log("Couldn't create mobile service client");
+        }
         
         push.on('notification', (data) => {
+          console.log(data);
           const payload = JSON.parse(data.launchArgs);
           this._notificationReceived(payload);
         });
+        
+        push.on('registration', function (data) {
+          console.log(data);
+          var handle = data.registrationId;
+          client.push.register('wns', handle, {});
+        });
+        
+        push.on('error', console.log);
       }
       
       this._needsRefresh = false;

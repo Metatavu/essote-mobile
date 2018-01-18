@@ -35,5 +35,7 @@
     <engine name="android" spec="^6.3.0" />
     <engine name="ios" spec="^4.5.4" />
     <engine name="windows" spec="4.4.2" />
+    <preference name="WindowsStoreDisplayName" value="Essote Mobile Kehitysversio" />
     <plugin name="phonegap-plugin-push" spec="^2.1.2" />
+    <plugin name="cordova-plugin-ms-azure-mobile-apps" spec="^2.0.0" />
 </widget>
