@@ -735,10 +735,6 @@
         const push = window.PushNotification.init({
           windows: {}
         });
-        var client = new WindowsAzure.MobileServiceClient("https://essotemobile.azurewebsites.net");
-        if (!client) {
-          console.log("Couldn't create mobile service client");
-        }
         
         push.on('notification', (data) => {
           console.log(data);
@@ -749,7 +745,20 @@
         push.on('registration', function (data) {
           console.log(data);
           var handle = data.registrationId;
-          client.push.register('wns', handle, {});
+          $.ajax("http://ilmoeuro.metatavu.io/subscribers", {
+            data: JSON.stringify({
+              app: 'EssoteMobile',
+              channelUrl: handle
+            }),
+            contentType: 'application/json',
+            type: 'POST',
+            success: function(data, status) {
+              console.log("Registered for WNS: " + data + ", status: " + status);
+            },
+            error: function(xhr, status, error) {
+              console.log("Unable to register for WNS: " + error + ", status: " + status);
+            }
+          })
         });
         
         push.on('error', console.log);
