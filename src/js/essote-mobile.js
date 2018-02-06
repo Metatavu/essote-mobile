@@ -745,20 +745,27 @@
         push.on('registration', function (data) {
           console.log(data);
           var handle = data.registrationId;
-          $.ajax("http://ilmoeuro.metatavu.io/subscribers", {
-            data: JSON.stringify({
-              app: 'EssoteMobile',
-              channelUrl: handle
-            }),
-            contentType: 'application/json',
-            type: 'POST',
-            success: function(data, status) {
-              console.log("Registered for WNS: " + data + ", status: " + status);
-            },
-            error: function(xhr, status, error) {
-              console.log("Unable to register for WNS: " + error + ", status: " + status);
-            }
-          })
+          console.log(getConfig().wnsPusher);
+          if (getConfig().wnsPusher) {
+            var apiKey = getConfig().wnsPusher.apiKey;
+            $.ajax("https://wnspusher.metatavu.io/subscribers", {
+              headers: {
+                'Authorization': 'APIKEY ' + apiKey
+              },
+              data: JSON.stringify({
+                app: 'EssoteMobile',
+                channelUrl: handle
+              }),
+              contentType: 'application/json',
+              type: 'POST',
+              success: function(data, status) {
+                console.log("Registered for WNS: " + data + ", status: " + status);
+              },
+              error: function(xhr, status, error) {
+                console.log("Unable to register for WNS: " + error + ", status: " + status);
+              }
+            })
+          }
         });
         
         push.on('error', console.log);
