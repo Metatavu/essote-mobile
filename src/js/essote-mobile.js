@@ -737,20 +737,17 @@
         });
         
         push.on('notification', (data) => {
-          console.log(data);
           const payload = JSON.parse(data.launchArgs);
           this._notificationReceived(payload);
         });
         
         push.on('registration', function (data) {
-          console.log(data);
           var handle = data.registrationId;
-          console.log(getConfig().wnsPusher);
           if (getConfig().wnsPusher) {
             var apiKey = getConfig().wnsPusher.apiKey;
-            $.ajax("https://wnspusher.metatavu.io/subscribers", {
+            $.ajax(getConfig().wnsPusher.url, {
               headers: {
-                'Authorization': 'APIKEY ' + apiKey
+                'Authorization': `APIKEY ${apiKey}`
               },
               data: JSON.stringify({
                 app: 'EssoteMobile',
@@ -759,16 +756,16 @@
               contentType: 'application/json',
               type: 'POST',
               success: function(data, status) {
-                console.log("Registered for WNS: " + data + ", status: " + status);
+                // do nothing
               },
               error: function(xhr, status, error) {
-                console.log("Unable to register for WNS: " + error + ", status: " + status);
+                console.error("Unable to register for WNS: " + error + ", status: " + status);
               }
             });
           }
         });
         
-        push.on('error', console.log);
+        push.on('error', console.error);
       }
       
       this._needsRefresh = false;
