@@ -764,7 +764,7 @@
               error: function(xhr, status, error) {
                 console.log("Unable to register for WNS: " + error + ", status: " + status);
               }
-            })
+            });
           }
         });
         
