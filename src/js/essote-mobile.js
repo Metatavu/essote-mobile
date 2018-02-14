@@ -723,22 +723,15 @@
         });
         
         window.FirebasePlugin.onNotificationOpen((notification) => {
-          this._notificationReceived(notification);
+          this.notificationReceived(notification);
         }, (error) => {
             console.error(error);
         });
       }
       
-      console.log("Trying to initialize PushNotification");
       if (window.PushNotification) {
-        console.log("Initializing PushNotification");
         const push = window.PushNotification.init({
           windows: {}
-        });
-        
-        push.on('notification', (data) => {
-          const payload = JSON.parse(data.launchArgs);
-          this._notificationReceived(payload);
         });
         
         push.on('registration', function (data) {
@@ -771,7 +764,7 @@
       this._needsRefresh = false;
     },
     
-    _notificationReceived: function(notification) {
+    notificationReceived: function (notification) {
       const soteApiEvent = notification ? notification.soteApiEvent : null;
       if (soteApiEvent === 'ITEM-CREATED') {
         const itemId = notification.itemId;
@@ -1203,10 +1196,18 @@
     }
     
   });
+
+  $(document).on("activated", () => {
+    var jsonArgs = cordova.require('cordova/platform').activationContext.args;
+    if (jsonArgs) {
+      var args = JSON.parse(jsonArgs);
+      $(document.body).essoteMobile("notificationReceived", args);
+    }
+  });
   
   $(document).on("deviceready", () => {
     moment.locale('fi');
-  
+    
     const itemDatabase = new ItemDatabase();
     itemDatabase.initialize()
       .then(() => {    
