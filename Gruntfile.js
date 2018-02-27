@@ -34,7 +34,8 @@ module.exports = function(grunt) {
     const config = this.data.options.config;
     
     const values = {
-      server: config.server
+      server: config.server,
+      wnsPusher: config.wnsPusher
     };
     
     fs.writeFileSync(this.data.options.output, util.format('function getConfig() { return %s; };', JSON.stringify(values)));

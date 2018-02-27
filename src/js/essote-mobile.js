@@ -723,19 +723,55 @@
         });
         
         window.FirebasePlugin.onNotificationOpen((notification) => {
-          const soteApiEvent = notification ? notification.soteApiEvent : null;
-          if (soteApiEvent === 'ITEM-CREATED') {
-            const itemId = notification.itemId;
-            const itemType = notification.itemType;
-            this._startPriorityUpdate();
-            this._waitAndSlideTo({ "type": itemType , "id": itemId });
-          }
+          this.notificationReceived(notification);
         }, (error) => {
             console.error(error);
         });
       }
       
+      if (window.PushNotification) {
+        const push = window.PushNotification.init({
+          windows: {}
+        });
+        
+        push.on('registration', function (data) {
+          var handle = data.registrationId;
+          if (getConfig().wnsPusher) {
+            var apiKey = getConfig().wnsPusher.apiKey;
+            $.ajax(getConfig().wnsPusher.url, {
+              headers: {
+                'Authorization': `APIKEY ${apiKey}`
+              },
+              data: JSON.stringify({
+                app: 'EssoteMobile',
+                channelUrl: handle
+              }),
+              contentType: 'application/json',
+              type: 'POST',
+              success: function(data, status) {
+                // do nothing
+              },
+              error: function(xhr, status, error) {
+                console.error("Unable to register for WNS: " + error + ", status: " + status);
+              }
+            });
+          }
+        });
+        
+        push.on('error', console.error);
+      }
+      
       this._needsRefresh = false;
+    },
+    
+    notificationReceived: function (notification) {
+      const soteApiEvent = notification ? notification.soteApiEvent : null;
+      if (soteApiEvent === 'ITEM-CREATED') {
+        const itemId = notification.itemId;
+        const itemType = notification.itemType;
+        this._startPriorityUpdate();
+        this._waitAndSlideTo({ "type": itemType , "id": itemId });
+      }
     },
     
     _getServerUrl: function () {
@@ -1160,10 +1196,18 @@
     }
     
   });
+
+  $(document).on("activated", () => {
+    var jsonArgs = cordova.require('cordova/platform').activationContext.args;
+    if (jsonArgs) {
+      var args = JSON.parse(jsonArgs);
+      $(document.body).essoteMobile("notificationReceived", args);
+    }
+  });
   
   $(document).on("deviceready", () => {
     moment.locale('fi');
-  
+    
     const itemDatabase = new ItemDatabase();
     itemDatabase.initialize()
       .then(() => {    
