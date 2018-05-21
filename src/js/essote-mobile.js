@@ -236,7 +236,7 @@
         case 'NEWS':
           const requestOptions = {
             type: ['NEWS'], 
-            firtResult: options.firstResult,
+            firstResult: options.firstResult,
             maxResults: options.maxResults
           };
 
