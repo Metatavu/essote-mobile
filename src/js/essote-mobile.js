@@ -1180,7 +1180,7 @@
         this._refreshTimeout = setTimeout(() => {
           this._refreshPage(true);
           this._stopLoading(true);
-        }, 200);
+        }, 400);
       } else {
         this._needsRefresh = true;
       }
