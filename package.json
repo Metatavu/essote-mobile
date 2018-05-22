@@ -43,15 +43,16 @@
     },
     "platforms": [
       "browser",
-      "android",
       "ios",
-      "windows"
+      "windows",
+      "android"
     ]
   },
   "devDependencies": {
     "autoprefixer": "^7.2.4",
     "babel-core": "^6.26.0",
     "grunt-browserify": "^5.2.0",
-    "grunt-postcss": "^0.9.0"
+    "grunt-postcss": "^0.9.0",
+    "grunt-shell": "^2.1.0"
   }
 }

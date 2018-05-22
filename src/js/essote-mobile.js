@@ -234,14 +234,21 @@
             });
           });
         case 'NEWS':
-          return this.getContentsApi().listContents({ type: ['NEWS'] }).then((newsArticles) => {
-            return newsArticles.map((newsArticle) => {
-              return Object.assign({}, newsArticle, {
-                order: newsArticle.created.getTime(),
-                item: newsArticle
+          const requestOptions = {
+            type: ['NEWS'], 
+            firstResult: options.firstResult,
+            maxResults: options.maxResults
+          };
+
+          return this.getContentsApi().listContents(requestOptions)
+            .then((newsArticles) => {
+              return newsArticles.map((newsArticle) => {
+                return Object.assign({}, newsArticle, {
+                  order: newsArticle.created.getTime(),
+                  item: newsArticle
+                });
               });
             });
-          });
       }
     }
     
@@ -270,6 +277,8 @@
     getCustomChildrenOptions(customChildrenList) {
       return {
         sort: customChildrenList.attr('data-sort'),
+        firstResult: parseInt(customChildrenList.attr('data-first-result')) || null,
+        maxResults: parseInt(customChildrenList.attr('data-max-results')) || null,
         event: {
           category: customChildrenList.attr('data-event-category'),
           endsAfter: this.parseTimeFilter($(customChildrenList).attr('data-event-ends-after')),
@@ -1065,13 +1074,33 @@
       });
     },
     
-    _startLoading: function () {
-      $(document.body).addClass('loading');
+    /**
+     * Starts loading animation
+     * 
+     * @param boolean only for the active content slide 
+     */
+    _startLoading: function (contentOnly) {
+      if (contentOnly) {
+        $('.swiper-slide-active .content-page-content').addClass('loading');
+      } else {
+        $(document.body).addClass('loading');
+      }
+
       this._loading = true;
     },
     
-    _stopLoading: function () {
-      $(document.body).removeClass('loading');
+    /**
+     * Stops loading animation
+     * 
+     * @param boolean the content slides 
+     */
+    _stopLoading: function (contentOnly) {
+      if (contentOnly) {
+        $('.content-page-content').removeClass('loading');
+      } else {
+        $(document.body).removeClass('loading');
+      }
+      
       this._loading = false;
     },
     
@@ -1141,9 +1170,17 @@
       const itemController = data.itemController;
       const id = itemController.getId();
       const parentId = itemController.getParentId();
-      
+
       if (parentId === this._getActiveController().getId() || id === this._getActiveController().getId()) {
-        this._refreshPage();
+        if (this._refreshTimeout) {
+          this._startLoading(true);
+          clearTimeout(this._refreshTimeout);
+        }
+
+        this._refreshTimeout = setTimeout(() => {
+          this._refreshPage(true);
+          this._stopLoading(true);
+        }, 200);
       } else {
         this._needsRefresh = true;
       }
