@@ -1043,11 +1043,14 @@
     handleYoutubeIframes: function () {
       $("iframe").each(function() {
         const src = $(this).attr("src");
+        const urls = ["youtu.be", "youtube.com"];
 
-        if (typeof src !== typeof undefined && src !== false) {
-          if (src.toLowerCase().indexOf("youtube.com") != -1) {
-            $(this).addClass("youtube-iframe");
-          }
+        if (src) {
+          urls.forEach((url) => {
+            if (src.toLowerCase().indexOf(url) != -1) {
+              $(this).addClass("youtube-iframe");
+            }
+          });
         }
       });
     },
