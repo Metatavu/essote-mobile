@@ -1,7 +1,7 @@
 {
   "name": "fi.metatavu.essotemobile",
   "displayName": "essote-mobile",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Mobile application for ESSOTE",
   "main": "index.js",
   "scripts": {
