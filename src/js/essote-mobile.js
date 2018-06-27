@@ -1041,7 +1041,7 @@
     },
 
     handleYoutubeIframes: function () {
-      $( "iframe" ).each(function() {
+      $("iframe").each(function() {
         const src = $(this).attr("src");
 
         if (typeof src !== typeof undefined && src !== false) {
