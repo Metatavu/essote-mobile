@@ -1047,7 +1047,7 @@
 
         if (src) {
           urls.forEach((url) => {
-            if (src.toLowerCase().indexOf(url) != -1) {
+            if (src.toLowerCase().indexOf(url) !== -1) {
               $(this).addClass("youtube-iframe");
             }
           });
