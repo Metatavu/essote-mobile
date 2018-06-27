@@ -1035,6 +1035,20 @@
           $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
           this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
         }
+
+        this.handleYoutubeIframes();
+      });
+    },
+
+    handleYoutubeIframes: function () {
+      $( "iframe" ).each(function() {
+        const src = $(this).attr("src");
+
+        if (typeof src !== typeof undefined && src !== false) {
+          if (src.toLowerCase().indexOf("youtube.com") != -1) {
+            $(this).addClass("youtube-iframe");
+          }
+        }
       });
     },
     
