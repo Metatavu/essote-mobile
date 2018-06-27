@@ -1035,6 +1035,23 @@
           $('.swiper-slide-active .content-page-content').html(this._getActiveController().getContentHtml());
           this._getActiveController().onAfterPageRefresh($('.swiper-slide-active .content-page-content'));        
         }
+
+        this.handleYoutubeIframes();
+      });
+    },
+
+    handleYoutubeIframes: function () {
+      $("iframe").each(function() {
+        const src = $(this).attr("src");
+        const urls = ["youtu.be", "youtube.com"];
+
+        if (src) {
+          urls.forEach((url) => {
+            if (src.toLowerCase().indexOf(url) !== -1) {
+              $(this).addClass("youtube-iframe");
+            }
+          });
+        }
       });
     },
     
