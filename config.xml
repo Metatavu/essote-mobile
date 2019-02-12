@@ -24,10 +24,6 @@
         <allow-intent href="about:*" />
         <allow-navigation href="*" />
     </platform>
-    <plugin name="cordova-plugin-whitelist" spec="^1.3.3" />
-    <plugin name="cordova-plugin-device" spec="^1.1.7" />
-    <plugin name="cordova-plugin-firebase" spec="^0.1.24" />
-    <plugin name="cordova-plugin-inappbrowser" spec="^1.7.2" />
     <vs:toolsetVersion xmlns:vs="http://schemas.microsoft.com/appx/2014/htmlapps">6.3.1</vs:toolsetVersion>
     <preference name="windows-target-version" value="10.0" />
     <preference name="WindowsStoreDisplayName" value="Essote Mobile Kehitysversio" />
@@ -38,12 +34,16 @@
         </vs:platformSpecificWidget>
     </vs:platformSpecificValues>
     <preference name="WindowsStoreIdentityName" value="MetatavuOy.EssoteMobileKehitysversio" />
-    <plugin name="phonegap-plugin-push" spec="^2.1.3">
-        <variable name="FCM_VERSION" value="11.6.2" />
-    </plugin>
-    <plugin name="cordova-sqlite-storage" spec="^2.1.1" />
     <engine name="browser" spec="^5.0.1" />
     <engine name="ios" spec="^4.5.4" />
     <engine name="windows" spec="4.4.2" />
     <engine name="android" spec="^6.3.0" />
+    <plugin name="cordova-plugin-whitelist" spec="^1.3.3" />
+    <plugin name="cordova-plugin-device" spec="^1.1.7" />
+    <plugin name="cordova-plugin-firebase" spec="^0.1.24" />
+    <plugin name="cordova-plugin-inappbrowser" spec="^1.7.2" />
+    <plugin name="phonegap-plugin-push" spec="^2.1.3">
+        <variable name="FCM_VERSION" value="11.6.2" />
+    </plugin>
+    <plugin name="cordova-sqlite-storage" spec="^2.1.1" />
 </widget>
