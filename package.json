@@ -14,7 +14,7 @@
     "babel-preset-es2015": "^6.24.1",
     "cordova-android": "^6.3.0",
     "cordova-browser": "^5.0.1",
-    "cordova-ios": "^4.5.4",
+    "cordova-ios": "^5.0.0",
     "cordova-plugin-device": "^1.1.7",
     "cordova-plugin-firebase": "^0.1.24",
     "cordova-plugin-inappbrowser": "^1.7.2",
