@@ -17,3 +17,4 @@ npm-debug.log
 .netbeans.xml
 /src/api-client/node_modules/
 /config.json
+GoogleService-Info.plist

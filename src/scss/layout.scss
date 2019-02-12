@@ -369,6 +369,21 @@ a.btn.home-btn {
   
 }
 
+.facebook-iframe {
+  width: 100%;
+  height: 90vh;
+  display: flex;
+  justify-content: center;
+
+  iframe {
+    min-height: 500px;
+    height: 100%;
+    position: static;
+    top: 77px;
+    width: 100%;
+  }
+}
+
 iframe.youtube-iframe {
   width: 100%;
   position: static;
@@ -378,3 +393,23 @@ iframe.youtube-iframe {
   left: auto;
   border: auto;
 }
+
+#instagramFeedContainer {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  .instagram-feed-item {
+    flex: 0 33%;
+    justify-content: center;
+    align-items: center;
+    margin: 2px;
+  }
+
+  .instagram-feed-item img {
+    width: 150px;
+    height: 150px;
+  }
+}
+
